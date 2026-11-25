@@ -1,0 +1,16 @@
+{
+  "name": "brandmd",
+  "version": "0.0.1",
+  "description": "Linter for the BRAND.md format",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "bin": { "brandmd": "src/cli.js" },
+  "exports": { ".": "./src/lint.js" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test",
+    "lint:examples": "node src/cli.js lint examples/panier-gris/BRAND.md && node src/cli.js lint examples/lanternfish/BRAND.md"
+  },
+  "dependencies": { "yaml": "^2.6.0" }
+}
