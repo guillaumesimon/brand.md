@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 
-import { RULES, lint } from './lint.js';
+import { RULES, collect, lint } from './lint.js';
 
 const USAGE = `Usage:
   brandmd lint <file | -> [--format json|text]   Lint a BRAND.md (use - for stdin)
+  brandmd extract <file | -> [--area <area>]     List the brand's rules and visuals as JSON,
+                                                 each tagged with its area
   brandmd rules                                  List the lint rules as JSON
 
 Exit codes: 0 no errors, 1 errors found, 2 bad usage or unreadable file.
@@ -29,6 +31,28 @@ if (!command || command === '--help' || command === '-h') {
   process.stdout.write(`${USAGE}\n`);
 } else if (command === 'rules') {
   process.stdout.write(`${JSON.stringify(RULES, null, 2)}\n`);
+} else if (command === 'extract') {
+  let area;
+  const positional = [];
+  for (let i = 0; i < rest.length; i += 1) {
+    if (rest[i] === '--area') {
+      area = rest[i + 1];
+      i += 1;
+    } else if (rest[i].startsWith('--area=')) {
+      area = rest[i].slice('--area='.length);
+    } else {
+      positional.push(rest[i]);
+    }
+  }
+  if (positional.length !== 1) fail('extract takes exactly one file path, or - for stdin.');
+  if (rest.includes('--area') && !area) fail('--area needs a value, such as voice or logo.');
+  let markdown;
+  try {
+    markdown = readFileSync(positional[0] === '-' ? 0 : positional[0], 'utf8');
+  } catch (err) {
+    fail(`Cannot read ${positional[0]}: ${err.message}`);
+  }
+  process.stdout.write(`${JSON.stringify(collect(markdown, { area }), null, 2)}\n`);
 } else if (command === 'lint') {
   let format = 'json';
   const positional = [];

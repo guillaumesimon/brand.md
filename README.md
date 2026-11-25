@@ -25,9 +25,17 @@ only. It does not resemble an artisan-lifestyle brand.
 
 ## Voice & Tone
 
-| Instead of | Write | Why |
-|---|---|---|
-| Indulge in our artisanal sourdough experience! | Sourdough, out at 7:30. | We say what and when. |
+```yaml
+voice:
+  examples:
+    - instead: Indulge in our artisanal sourdough experience!
+      write: Sourdough, out at 7:30.
+      why: We say what and when.
+rules:
+  - verdict: dont
+    rule: No exclamation marks.
+    exception: none
+```
 
 ## Claims
 
@@ -80,16 +88,23 @@ warning design-drift       product/DESIGN.md
 BRAND.md: 0 error(s), 2 warning(s), 0 info
 ```
 
-(Abridged output from a deliberately broken copy; the shipped examples lint clean.)
+(Abridged output from a deliberately broken copy; the two fictional examples lint clean.)
 
 Output is JSON by default, in the same shape as DESIGN.md's linter: `{ findings: [{ severity, rule, path, message }], summary: { errors, warnings, infos } }`. The exit code is `1` when there are errors, `0` otherwise, and `2` for bad usage. Use `-` to read from standard input, and `node src/cli.js rules` to list the rules.
+
+To give an agent only what concerns its task, `extract` returns the brand's rules and visuals as JSON, each tagged with its area:
+
+```bash
+node src/cli.js extract examples/lanternfish/BRAND.md --area voice
+```
 
 The linter is also a library:
 
 ```js
-import { lint } from './src/lint.js';
+import { collect, lint } from './src/lint.js';
 
 const report = lint(markdown, { file: 'BRAND.md' });
+const { rules, visuals } = collect(markdown, { area: 'photography' });
 ```
 
 Limits: colours are converted for contrast and drift checks when written as hex, `rgb()`, `hsl()` or a basic named colour. Other formats (`oklch()`, `color-mix()`) are accepted but those two checks skip them. The package is not published to npm.
@@ -110,7 +125,7 @@ Sections use `##` headings. Only Overview is required. Those present appear in t
 | 2 | Positioning | | Category, the alternative, the difference, the proof |
 | 3 | Audience | | Who it is for and who it is not for |
 | 4 | Personality | `personality` | Traits, each as is / not / means |
-| 5 | Voice & Tone | `voice` | Mechanics, before-and-after pairs, tone by situation |
+| 5 | Voice & Tone | `voice` | Mechanics, before-and-after examples, tone by situation |
 | 6 | Messaging | `messaging` | Tagline, one-liner, boilerplate, pillars with proof, calls to action |
 | 7 | Claims | `claims` | What may be asserted, with evidence and status |
 | 8 | Vocabulary | `vocabulary` | Words to use, words to avoid and their replacements |
@@ -120,7 +135,8 @@ Sections use `##` headings. Only Overview is required. Those present appear in t
 | 12 | Imagery | | Photography, illustration, icons, generation recipes |
 | 13 | Motion | `motion` | How the brand moves: character, animated logo, what never moves |
 | 14 | Applications | | Per-channel rules |
-| 15 | Do's and Don'ts | | Guardrails, each with its exception |
+
+Any section may also hold `rules` and `visuals`: the do's and don'ts for what that section governs.
 
 ### Schema
 
@@ -146,7 +162,12 @@ logo:
       <name>: { file, color, backgrounds }   # on-light, on-dark
 personality:
   - { is, not, means }
-voice: { person, casing, sentenceLength }
+voice:
+  person: <string>
+  casing: <string>
+  sentenceLength: <string>
+  examples:
+    - { instead, write, why }
 vocabulary:
   use:   { <term>: <note> }
   avoid: { <term>: <replacement> }
@@ -160,16 +181,20 @@ claims:
   - { claim, evidence, status: approved | review | prohibited }
 motion:
   <name>: { duration, delay, timingFunction }
-visuals:
-  - { file | url, shows, verdict: do | dont, caption }
+rules:                        # repeatable: may appear in every section
+  - { verdict: do | dont, rule, exception, area, visuals }
+visuals:                      # repeatable: may appear in every section
+  - { file | url, verdict: do | dont, caption, area }
 ```
 
 Token references (`{colors.crust}`) and external references (`` `@guides/photography.md` ``) work as they do in DESIGN.md.
 
-### Visuals
+### Rules and visuals
 
-`visuals` lists the images that show the brand done right or wrong: approved photographs, illustration samples, logo misuse. Each has a local `file` or an https `url`, what it `shows`, a `verdict` and a `caption`.
+Do's and don'ts sit in the section they govern. `rules` and `visuals` are the only keys that may appear in several blocks; each item takes its **area** from the heading above it (`logo`, `voice`, or under Imagery, `photography`, `illustration`...), and an explicit `area` can override it.
 
+- A rule is a `do` or a `dont` someone could check an output against. Every `dont` names its `exception`, or `none`.
+- A visual has a local `file` or an https `url`, a `verdict` and a `caption`.
 - The caption states the rule, so a model that cannot see images still learns it.
 - A `dont` image is never given to an image model as a reference.
 - Local files are checked by the linter. URLs are accepted, reported as unverified and never fetched.
@@ -190,7 +215,7 @@ The spec defines the rules so any tool behaves the same way; the linter in this 
 | Rule | Severity | What it checks |
 |:--|:--|:--|
 | `invalid-yaml` | error | YAML that cannot be parsed |
-| `duplicate-key` | error | A top-level key defined in two blocks |
+| `duplicate-key` | error | A top-level key other than `rules` or `visuals` defined in two blocks |
 | `duplicate-section` | error | A section, or its alias, appearing twice |
 | `missing-name` | error | No `name` |
 | `broken-ref` | error | Unresolved `{token}` references, missing logo files, out-of-bounds `@` paths |
@@ -202,18 +227,20 @@ The spec defines the rules so any tool behaves the same way; the linter in this 
 | `missing-colorway` | warning | A logo variation with no colourway, or a colourway with no file |
 | `unsupported-claim` | warning | An approved claim with no evidence |
 | `unknown-property` | warning | A property the spec does not define |
-| `invalid-value` | warning | A malformed CMYK value, motion duration or visual entry |
+| `invalid-value` | warning | A malformed CMYK value, motion duration, visual, rule or voice example |
 | `missing-caption` | warning | A visual with no caption |
+| `missing-exception` | info | A `dont` rule with no exception |
 | `unverified-url` | info | A visual given by URL, which is not fetched |
 | `unverified-license` | info | A typeface whose licence is not verified |
 | `adjective-only` | info | A personality trait with no `not` or `means` |
 
 ## Examples
 
-Both brands are fictional.
+Panier Gris and Lanternfish are fictional. Bolt is real.
 
 - [`examples/panier-gris/`](examples/panier-gris/BRAND.md): a bakery with no product and no design system. BRAND.md on its own.
 - [`examples/lanternfish/`](examples/lanternfish/BRAND.md): a software company, with a [`product/DESIGN.md`](examples/lanternfish/product/DESIGN.md) that links to its brand and mirrors the required colours by value.
+- [`examples/bolt/`](examples/bolt/BRAND.md): a real brand, transcribed from Bolt's January 2024 guidelines. Unofficial and not endorsed by Bolt. It shows what real guidelines cover well (logo, colour, print values) and what they leave out, and it lints with errors on purpose: [why](examples/bolt/README.md).
 
 ## Using it with an agent
 

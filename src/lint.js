@@ -6,7 +6,7 @@ import { externalRefs, parseDocument, resolvePath, stringLeaves, stripCodeSpans,
 
 export const SECTION_ORDER = [
   'overview', 'positioning', 'audience', 'personality', 'voice & tone', 'messaging', 'claims',
-  'vocabulary', 'logo', 'colors', 'typography', 'imagery', 'motion', 'applications', "do's and don'ts",
+  'vocabulary', 'logo', 'colors', 'typography', 'imagery', 'motion', 'applications',
 ];
 
 const SECTION_ALIASES = {
@@ -23,7 +23,9 @@ const KNOWN_PROPERTIES = {
   'logo colourway': ['file', 'color', 'backgrounds'],
   'print colour': ['cmyk', 'pantone', 'note'],
   'motion token': ['duration', 'delay', 'timingFunction'],
-  visual: ['file', 'url', 'shows', 'verdict', 'caption'],
+  visual: ['file', 'url', 'area', 'verdict', 'caption'],
+  rule: ['verdict', 'rule', 'exception', 'area', 'visuals'],
+  'voice example': ['instead', 'write', 'why'],
   trait: ['is', 'not', 'means'],
   pillar: ['claim', 'proof'],
   claim: ['claim', 'evidence', 'status'],
@@ -49,10 +51,11 @@ export const RULES = {
   'unverified-url': 'info',
   'unverified-license': 'info',
   'adjective-only': 'info',
+  'missing-exception': 'info',
 };
 
-/** What a visual may illustrate. */
-export const VISUAL_SUBJECTS = ['logo', 'colors', 'typography', 'photography', 'illustration', 'icons', 'motion', 'applications'];
+/** The area a section's rules and visuals apply to, when it is not the section's own name. */
+const SECTION_AREAS = { overview: 'general', 'voice & tone': 'voice' };
 
 const MIN_LOGO_CONTRAST = 3;
 const SKIPPED_DIRS = new Set(['node_modules', 'dist', 'vendor', 'build', '.git']);
@@ -61,6 +64,36 @@ const isMap = (value) => value !== null && typeof value === 'object' && !Array.i
 const asList = (value) => (Array.isArray(value) ? value : []);
 const normalizeTitle = (title) => title.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
 const canonicalSection = (title) => SECTION_ALIASES[normalizeTitle(title)] ?? normalizeTitle(title);
+
+/**
+ * The area a rule or visual applies to: its explicit `area` if it has one,
+ * otherwise the section it is written in. Under Imagery, the `###` heading
+ * names the area (photography, illustration, icons, ...). Items in front
+ * matter, or before any section, are `general`.
+ */
+export function areaOf(item, context) {
+  if (isMap(item) && typeof item.area === 'string' && item.area.trim() !== '') return normalizeTitle(item.area);
+  if (!context || !context.section) return 'general';
+  const section = canonicalSection(context.section);
+  if (section === 'imagery' && context.subsection) return normalizeTitle(context.subsection);
+  return SECTION_AREAS[section] ?? section;
+}
+
+/**
+ * Every rule and visual in a BRAND.md, each tagged with the area it applies to.
+ *
+ * @param {string} markdown
+ * @param {{ area?: string }} [options] Keep only items for this area.
+ * @returns {{ rules: object[], visuals: object[] }}
+ */
+export function collect(markdown, options = {}) {
+  const { tree, placed } = parseDocument(markdown);
+  const want = options.area ? normalizeTitle(options.area) : null;
+  const tag = (key) => asList(tree[key])
+    .map((item, index) => ({ ...(isMap(item) ? item : { value: item }), area: areaOf(item, placed[key][index]) }))
+    .filter((item) => !want || item.area === want);
+  return { rules: tag('rules'), visuals: tag('visuals') };
+}
 
 /** True for four numbers from 0 to 100 separated by spaces, commas or slashes. */
 function isCmyk(value) {
@@ -125,7 +158,7 @@ function linkedDesigns(dir, brandFile) {
  * @returns {{ findings: {severity: string, rule: string, path: string, message: string}[], summary: {errors: number, warnings: number, infos: number} }}
  */
 export function lint(markdown, options = {}) {
-  const { tree, sections, prose, problems } = parseDocument(markdown);
+  const { tree, sections, prose, problems, placed } = parseDocument(markdown);
   const file = options.file ? resolve(options.file) : null;
   const dir = file ? dirname(file) : null;
   const findings = [];
@@ -271,11 +304,50 @@ export function lint(markdown, options = {}) {
     if (visual.verdict !== 'do' && visual.verdict !== 'dont') {
       report('invalid-value', `${path}.verdict`, 'A visual needs a `verdict` of `do` or `dont`, so a bad example is never used as a reference.');
     }
-    if (!VISUAL_SUBJECTS.includes(visual.shows)) {
-      report('invalid-value', `${path}.shows`, `\`shows\` must be one of: ${VISUAL_SUBJECTS.join(', ')}.`);
+    if (visual.area !== undefined && (typeof visual.area !== 'string' || visual.area.trim() === '')) {
+      report('invalid-value', `${path}.area`, '`area` must be a name, such as logo or photography.');
     }
     if (typeof visual.caption !== 'string' || visual.caption.trim() === '') {
       report('missing-caption', path, 'A visual needs a `caption` saying what it demonstrates.');
+    }
+  }
+
+  // Rules: each one is a do or a dont, states itself, and names its exception.
+  for (const [index, rule] of asList(tree.rules).entries()) {
+    const path = `rules[${index}]`;
+    const area = areaOf(rule, placed.rules[index]);
+    if (!isMap(rule)) {
+      report('invalid-value', path, 'A rule must be a map with `verdict` and `rule`.');
+      continue;
+    }
+    unknownProperties('rule', rule, path);
+    if (rule.verdict !== 'do' && rule.verdict !== 'dont') {
+      report('invalid-value', `${path}.verdict`, `A rule (${area}) needs a \`verdict\` of \`do\` or \`dont\`.`);
+    }
+    if (typeof rule.rule !== 'string' || rule.rule.trim() === '') {
+      report('invalid-value', `${path}.rule`, `A rule (${area}) needs its \`rule\` text.`);
+    }
+    if (rule.verdict === 'dont' && (typeof rule.exception !== 'string' || rule.exception.trim() === '')) {
+      report('missing-exception', path, `"${rule.rule}" (${area}) names no exception. Write "none" if there is none.`);
+    }
+    if (rule.area !== undefined && (typeof rule.area !== 'string' || rule.area.trim() === '')) {
+      report('invalid-value', `${path}.area`, '`area` must be a name, such as logo or voice.');
+    }
+    for (const [visualIndex, visualFile] of asList(rule.visuals).entries()) {
+      if (typeof visualFile === 'string') localTarget(visualFile, `${path}.visuals[${visualIndex}]`, 'Rule visual');
+    }
+  }
+
+  // Voice examples: an off-brand line and its on-brand rewrite.
+  const voiceExamples = isMap(tree.voice) ? asList(tree.voice.examples) : [];
+  for (const [index, example] of voiceExamples.entries()) {
+    const path = `voice.examples[${index}]`;
+    if (!isMap(example)) continue;
+    unknownProperties('voice example', example, path);
+    for (const key of ['instead', 'write']) {
+      if (typeof example[key] !== 'string' || example[key].trim() === '') {
+        report('invalid-value', `${path}.${key}`, `A voice example needs \`${key}\`.`);
+      }
     }
   }
 
@@ -321,17 +393,23 @@ export function lint(markdown, options = {}) {
     }
   }
 
-  // Messaging: the brand must not use the words it tells others to avoid.
+  // Messaging and voice examples: the brand must not use the words it tells
+  // others to avoid.
   const messaging = isMap(tree.messaging) ? tree.messaging : {};
   for (const [index, pillar] of asList(messaging.pillars).entries()) unknownProperties('pillar', pillar, `messaging.pillars[${index}]`);
   const avoided = isMap(tree.vocabulary) && isMap(tree.vocabulary.avoid) ? Object.keys(tree.vocabulary.avoid) : [];
   if (avoided.length > 0) {
-    for (const leaf of stringLeaves(messaging, 'messaging')) {
+    const ownWords = [
+      ...stringLeaves(messaging, 'messaging'),
+      ...voiceExamples.map((example, index) => ({ path: `voice.examples[${index}].write`, value: isMap(example) ? example.write : undefined }))
+        .filter((leaf) => typeof leaf.value === 'string'),
+    ];
+    for (const leaf of ownWords) {
       if (leaf.path.startsWith('messaging.cta.never')) continue;
       for (const term of avoided) {
         const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         if (new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu').test(leaf.value)) {
-          report('self-violation', leaf.path, `Avoided term "${term}" appears in the brand's own messaging.`);
+          report('self-violation', leaf.path, `Avoided term "${term}" appears in the brand's own words.`);
         }
       }
     }

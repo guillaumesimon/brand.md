@@ -17,6 +17,16 @@ It resembles a harbour master's logbook, a night-shift handover note, the status
 
 When nothing here answers the question, choose the calmer option, and write as if the reader was woken up to read it.
 
+```yaml
+rules:
+  - verdict: dont
+    rule: Don't use sirens, flames, lightning, shields or red anywhere in marketing.
+    exception: A product screenshot that shows a firing page as it really appears.
+  - verdict: dont
+    rule: Don't joke about outages or sleep loss.
+    exception: none
+```
+
 ## Positioning
 
 On-call scheduling and paging. Not observability, not incident management, not a status page.
@@ -53,16 +63,30 @@ voice:
   person: "we for Lanternfish, you for the reader"
   casing: sentence case everywhere
   sentenceLength: under 18 words on average
+  examples:
+    - instead: Supercharge your incident response!
+      write: Know who is on call tonight.
+      why: We name the outcome, at its real size.
+    - instead: Never miss a critical alert again.
+      write: Pages reach a person in under a minute, or go to the next one.
+      why: A mechanism can be believed. A promise cannot.
+    - instead: Burnout is killing your team.
+      write: Two people took 70% of last quarter's night pages.
+      why: A number, not a threat.
+    - instead: Oops! Something went wrong.
+      write: The schedule did not save. Your changes are still in this tab.
+      why: Say what happened and what is safe.
+rules:
+  - verdict: do
+    rule: Put a time zone on every time.
+  - verdict: do
+    rule: State a mechanism behind every promise.
+  - verdict: dont
+    rule: No exclamation marks, no emoji, no rhetorical questions in headlines.
+    exception: none
 ```
 
-Present tense. Times always carry a time zone. Numbers as numerals. No exclamation marks, no emoji, no rhetorical questions in headlines.
-
-| Instead of | Write | Why |
-|---|---|---|
-| Supercharge your incident response! | Know who is on call tonight. | We name the outcome, at its real size. |
-| Never miss a critical alert again. | Pages reach a person in under a minute, or go to the next one. | A mechanism can be believed. A promise cannot. |
-| Burnout is killing your team. | Two people took 70% of last quarter's night pages. | A number, not a threat. |
-| Oops! Something went wrong. | The schedule did not save. Your changes are still in this tab. | Say what happened and what is safe. |
+Present tense. Numbers as numerals.
 
 **Tone by situation**
 
@@ -94,7 +118,14 @@ messaging:
     never: ["Book a demo", "Get started for free", "Supercharge", "Learn more"]
 ```
 
-Headlines may paraphrase a pillar but keep its mechanism. The tagline is used alone, never as part of a sentence.
+```yaml
+rules:
+  - verdict: dont
+    rule: Don't use the tagline inside a sentence.
+    exception: none
+  - verdict: do
+    rule: A headline may paraphrase a pillar, but keeps its mechanism.
+```
 
 ## Claims
 
@@ -115,6 +146,10 @@ claims:
   - claim: Any comparison with a named competitor.
     evidence: Not reviewed by counsel.
     status: prohibited
+rules:
+  - verdict: dont
+    rule: Make no claim that is not listed here with status approved.
+    exception: none
 ```
 
 ## Vocabulary
@@ -183,7 +218,20 @@ logo:
 
 The mark is a ring with a point of light at its centre: the watch, and the one who has it. The full logo on Abyss is the default; the brand lives in the dark. The wordmark is always lowercase.
 
-Every colourway is a single colour. Never set any part of the logo in Lure, and never colour the centre point differently from the ring. Never add a fish. Never place the logo on a photograph or a gradient. Never ask an image model to draw it: generate the image without it and place the file.
+Never ask an image model to draw it: generate the image without it and place the file.
+
+```yaml
+rules:
+  - verdict: dont
+    rule: Never set any part of the logo in Lure, or colour the centre point differently from the ring. Every colourway is one colour.
+    exception: none
+  - verdict: dont
+    rule: Never place the logo on a photograph or a gradient.
+    exception: none
+  - verdict: dont
+    rule: Never add a fish, or any creature, to the logo.
+    exception: none
+```
 
 ## Colors
 
@@ -209,7 +257,15 @@ print:
 - **Foam** {colors.foam} carries text on Abyss and is the ground for printed and long-form pieces. In words: a soft off-white with a hint of grey-green; not cream, not paper-white.
 - **Kelp** {colors.kelp} is optional, for secondary panels and charts. In words: a muted sea green; not teal, not emerald.
 
-Red is never a brand colour. It belongs to the product, where it means something is wrong.
+```yaml
+rules:
+  - verdict: dont
+    rule: Don't use Lure for more than one element in a view.
+    exception: A chart where Lure is the single highlighted series.
+  - verdict: dont
+    rule: Red is never a brand colour.
+    exception: Inside the product, where it means something is wrong.
+```
 
 Print is rare (conference stands, stickers). The CMYK builds are conversions to proof; no Pantone references have been chosen.
 
@@ -235,36 +291,63 @@ typography:
     licenseVerified: true
 ```
 
-**Space Grotesk** is for the wordmark and headlines. **Inter** is for everything read at length. **JetBrains Mono** is for times, names on a rota and anything that is data: a timestamp in a headline is set in mono even when the rest is not.
+**Space Grotesk** is for the wordmark and headlines. **Inter** is for everything read at length. **JetBrains Mono** is for times, names on a rota and anything that is data.
+
+```yaml
+rules:
+  - verdict: do
+    rule: Set every timestamp in JetBrains Mono, even inside a headline set in Space Grotesk.
+```
 
 ## Imagery
 
 ### Photography
 
-Rarely used. When it is: real desks at night, a phone face-up on a bedside table, a laptop lit by its own screen. One light source. No faces looking at the camera, no staged teams, no server rooms.
+Rarely used. When it is: real desks at night, a phone face-up on a bedside table, a laptop lit by its own screen.
+
+```yaml
+rules:
+  - verdict: do
+    rule: One light source.
+  - verdict: dont
+    rule: No faces looking at the camera, no staged teams, no server rooms.
+    exception: none
+```
 
 Recipe: "night interior, single warm practical light, deep blue-black shadows, 50mm, quiet and still, no people facing camera, no screens with readable text, no logo."
 
 ### Illustration
 
-Flat shapes in Abyss, Foam and Kelp with one Lure point, always a single dot or a short line. The dot is the watch: it shows who or what is awake. No characters, no fish, no waves.
-
-### Charts
-
-Charts are the brand's most common image. One series in Lure, everything else in Foam at reduced strength. Label lines directly; no legends.
+Flat shapes in Abyss, Foam and Kelp with one Lure point, always a single dot or a short line. The dot is the watch: it shows who or what is awake.
 
 ```yaml
+rules:
+  - verdict: dont
+    rule: No characters, no fish, no waves.
+    exception: none
+    visuals: [assets/visuals/illustration-dont.svg]
 visuals:
   - file: assets/visuals/illustration-do.svg
-    shows: illustration
     verdict: do
     caption: A rota as flat blocks in Kelp and Foam on Abyss, with a single Lure dot marking who has the watch.
   - file: assets/visuals/illustration-dont.svg
-    shows: illustration
     verdict: dont
     caption: A fish, waves, several Lure elements and a red alarm dot. The brand has one light and no creatures.
+```
+
+### Charts
+
+Charts are the brand's most common image.
+
+```yaml
+rules:
+  - verdict: do
+    rule: One series in Lure, everything else in Foam at reduced strength.
+  - verdict: dont
+    rule: No legends. Label lines and bars directly.
+    exception: none
+visuals:
   - file: assets/visuals/chart-do.svg
-    shows: illustration
     verdict: do
     caption: A bar chart with one series in Lure, the rest in faded Foam, the value labelled on the bar and no legend.
 ```
@@ -287,10 +370,21 @@ Lanternfish moves like something seen through deep water: slowly, one thing at a
 
 - **Settle** ({motion.settle.duration}) is how anything arrives: it eases in and stops. Nothing bounces or overshoots.
 - **Pulse** ({motion.pulse.duration}) belongs to the Lure dot alone. It brightens and dims once to show who has the watch, then rests.
-- One element moves at a time. Text never animates letter by letter.
-- The logo has no animated version and is never animated. Exception: none.
 
-Never: flashing, shaking, sirens, countdowns, looping backgrounds. Exception: a product recording that shows a firing page as it really behaves.
+```yaml
+rules:
+  - verdict: do
+    rule: One element moves at a time.
+  - verdict: dont
+    rule: Text never animates letter by letter.
+    exception: none
+  - verdict: dont
+    rule: The logo is never animated. It has no animated version.
+    exception: none
+  - verdict: dont
+    rule: No flashing, shaking, sirens, countdowns or looping backgrounds.
+    exception: A product recording that shows a firing page as it really behaves.
+```
 
 ## Applications
 
@@ -313,12 +407,3 @@ Plain text in appearance: Foam ground, Abyss text, no header image, the wordmark
 ### Decks
 
 Abyss ground, one idea per slide, numbers in mono. The last slide is the tagline alone.
-
-## Do's and Don'ts
-
-- **Do** put a time zone on every time.
-- **Do** state a mechanism behind every promise.
-- **Don't** use Lure for more than one element in a view. Exception: a chart where Lure is the single highlighted series.
-- **Don't** use sirens, flames, lightning, shields or red in marketing. Exception: a product screenshot that shows a firing page as it really appears.
-- **Don't** joke about outages or sleep loss. Exception: none.
-- **Don't** make a claim that is not in the Claims section with status `approved`.

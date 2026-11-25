@@ -15,6 +15,14 @@ It resembles a market stall's price cards, a baker's order pad, the back page of
 
 When nothing here answers the question, say less and say what is true today.
 
+```yaml
+rules:
+  - verdict: do
+    rule: Give the time. Every message about bread says when it is out.
+  - verdict: do
+    rule: Say when we are back, every time we say we are closed or sold out.
+```
+
 ## Positioning
 
 Panier Gris is a bread bakery. Not a patisserie, not a café, not a concept.
@@ -51,16 +59,31 @@ voice:
   person: "we for the bakery, you for the reader"
   casing: sentence case everywhere, including headlines
   sentenceLength: under 14 words on average
+  examples:
+    - instead: Indulge in our artisanal sourdough experience!
+      write: Sourdough, out at 7:30.
+      why: We say what and when.
+    - instead: We regret to inform you that we are sold out.
+      write: Sold out. Back tomorrow at 7:30.
+      why: No ceremony, and always the next time.
+    - instead: Our passionate team lovingly crafts every loaf.
+      write: Three of us bake. We start at 3:00.
+      why: A fact carries the feeling better.
+    - instead: Don't miss out on our seasonal special!
+      write: Walnut loaf this week. About forty a day.
+      why: Scarcity is stated, never used as pressure.
+rules:
+  - verdict: do
+    rule: Write times as numerals with a colon (7:30), and round prices without decimals.
+  - verdict: dont
+    rule: No exclamation marks.
+    exception: none
+  - verdict: dont
+    rule: Don't describe the bread with adjectives of quality (delicious, amazing, finest). Say what it is made of and when it was made.
+    exception: A customer's words, quoted and attributed.
 ```
 
-Short sentences. Times as numerals with a colon (7:30). Prices without decimals when they are round. No exclamation marks.
-
-| Instead of | Write | Why |
-|---|---|---|
-| Indulge in our artisanal sourdough experience! | Sourdough, out at 7:30. | We say what and when. |
-| We regret to inform you that we are sold out. | Sold out. Back tomorrow at 7:30. | No ceremony, and always the next time. |
-| Our passionate team lovingly crafts every loaf. | Three of us bake. We start at 3:00. | A fact carries the feeling better. |
-| Don't miss out on our seasonal special! | Walnut loaf this week. About forty a day. | Scarcity is stated, never used as pressure. |
+Short sentences.
 
 **Tone by situation**
 
@@ -153,7 +176,22 @@ logo:
 
 Panier Gris has a wordmark and nothing else: no symbol, no monogram, so no `mark` and no `full`. On-light (Slate on Flour) is the default.
 
-Never stretch it, recolour it, outline it, set it on a curve or add a wheat sheaf. Never ask an image model to draw it: generate the image without it and place the file.
+Never ask an image model to draw it: generate the image without it and place the file.
+
+```yaml
+rules:
+  - verdict: dont
+    rule: Never stretch, recolour, outline or curve the wordmark, and never add a wheat sheaf.
+    exception: none
+    visuals: [assets/visuals/logo-dont-stretched.svg]
+  - verdict: dont
+    rule: Don't put the logo on a photograph.
+    exception: The shopfront, where it is painted on the glass.
+visuals:
+  - file: assets/visuals/logo-dont-stretched.svg
+    verdict: dont
+    caption: The wordmark stretched to fill a wide space. Leave the space empty.
+```
 
 ## Colors
 
@@ -181,7 +219,15 @@ print:
 - **Crust** {colors.crust} appears once per piece at most, for the one thing that matters: today's time, a price, a closed notice. In words: a dark baked brown, the colour of a well-fired loaf; not chocolate, not terracotta.
 - **Butter** {colors.butter} is optional and rare: a highlight behind a single word. In words: a soft egg-yolk yellow; not gold, not lemon. Never used for text.
 
-No gradients. No colour outside these four.
+```yaml
+rules:
+  - verdict: dont
+    rule: Don't use Crust more than once in a piece.
+    exception: A price list, where every price may be Crust.
+  - verdict: dont
+    rule: No gradients, and no colour outside these four.
+    exception: none
+```
 
 Butter is never printed. No Pantone references have been chosen yet; the CMYK builds above are starting points to proof, not approved matches.
 
@@ -204,32 +250,36 @@ typography:
 
 **Fraunces** is for the wordmark, headlines and the day's bread names. It should feel like a sign painter's serif, slightly soft. **Karla** is for everything else: times, prices, paragraphs.
 
-Headlines are short enough to fit one line on a phone. Never set a whole paragraph in Fraunces. No italics, no all caps.
+```yaml
+rules:
+  - verdict: do
+    rule: Keep headlines short enough to fit one line on a phone.
+  - verdict: dont
+    rule: Never set a whole paragraph in Fraunces.
+    exception: none
+  - verdict: dont
+    rule: No italics, no all caps.
+    exception: none
+```
 
 ## Imagery
 
 ### Photography
 
-Hands, trays, the shop at opening time, the queue seen from behind. Daylight from the left, never a flash. Bread is shown whole or torn, not sliced into a fan. People are never posed and never look at the camera.
+Hands, trays, the shop at opening time, the queue seen from behind. Bread is shown whole or torn, not sliced into a fan.
 
 Recipe: "natural window light, 35mm, shallow depth of field, flour dust visible in the air, warm brown and off-white palette, no props, no text, no logo."
 
-Never: stock smiles, rustic twine, slate serving boards, overhead flat-lays, steam added in editing.
-
 ```yaml
-visuals:
-  - file: assets/visuals/sign-do.svg
-    shows: applications
-    verdict: do
-    caption: A daily post. Flour ground, Slate type, one fact, and Crust used once, on the time.
-  - file: assets/visuals/sign-dont.svg
-    shows: applications
-    verdict: dont
-    caption: Everything wrong at once. Crust as a background, Butter for text, italics, all caps, an exclamation mark, avoided words and a "Shop now" button.
-  - file: assets/visuals/logo-dont-stretched.svg
-    shows: logo
-    verdict: dont
-    caption: The wordmark stretched to fill a wide space. Leave the space empty.
+rules:
+  - verdict: do
+    rule: Daylight from the left. Never a flash.
+  - verdict: dont
+    rule: People are never posed and never look at the camera.
+    exception: none
+  - verdict: dont
+    rule: No stock smiles, rustic twine, slate serving boards, overhead flat-lays or steam added in editing.
+    exception: none
 ```
 
 No approved photographs are on file yet; until there are, the recipe above is the only reference for photography.
@@ -256,11 +306,12 @@ Flour ground, Slate type, the wordmark once. The chalkboard is handwritten and i
 
 Only for orders and closures. Subject lines state the fact ("Closed Monday 11 November"). No newsletter.
 
-## Do's and Don'ts
-
-- **Do** give the time. Every message about bread says when it is out.
-- **Do** say when we are back, every time we say we are closed or sold out.
-- **Don't** use an exclamation mark. Exception: none.
-- **Don't** put the logo on a photograph. Exception: the shopfront, where it is painted on the glass.
-- **Don't** use Crust more than once in a piece. Exception: a price list, where every price may be Crust.
-- **Don't** describe the bread with adjectives of quality (delicious, amazing, finest). Describe what it is made of and when it was made.
+```yaml
+visuals:
+  - file: assets/visuals/sign-do.svg
+    verdict: do
+    caption: A daily post. Flour ground, Slate type, one fact, and Crust used once, on the time.
+  - file: assets/visuals/sign-dont.svg
+    verdict: dont
+    caption: Everything wrong at once. Crust as a background, Butter for text, italics, all caps, an exclamation mark, avoided words and a "Shop now" button.
+```

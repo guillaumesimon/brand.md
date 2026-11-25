@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { contrastRatio, sameColor, toRgb } from '../src/color.js';
-import { lint } from '../src/lint.js';
+import { collect, lint } from '../src/lint.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = join(ROOT, 'src/cli.js');
@@ -254,25 +254,25 @@ test('logo animation: checked like the logo file', () => {
   assert.deepEqual(find(lint(doc, { file: join(dir, 'BRAND.md') }), 'broken-ref').map((f) => f.path), ['logo.wordmark.animation']);
 });
 
-test('visuals: local files, captions, verdicts and subjects are checked', () => {
+test('visuals: local files, captions and verdicts are checked', () => {
   const doc = withYaml([
     'visuals:',
-    '  - { file: assets/ok.svg, shows: logo, verdict: do, caption: Correct clear space. }',
-    '  - { file: assets/gone.svg, shows: logo, verdict: dont, caption: Stretched. }',
-    '  - { file: ../outside.svg, shows: logo, verdict: dont, caption: Elsewhere. }',
-    '  - { file: assets/ok.svg, shows: mood, verdict: maybe }',
-    '  - { shows: logo, verdict: do, caption: No location. }',
-    '  - { file: assets/ok.svg, url: "https://example.com/a.png", shows: logo, verdict: do, caption: Two locations. }',
+    '  - { file: assets/ok.svg, area: logo, verdict: do, caption: Correct clear space. }',
+    '  - { file: assets/gone.svg, area: logo, verdict: dont, caption: Stretched. }',
+    '  - { file: ../outside.svg, area: logo, verdict: dont, caption: Elsewhere. }',
+    '  - { file: assets/ok.svg, area: mood, verdict: maybe }',
+    '  - { area: logo, verdict: do, caption: No location. }',
+    '  - { file: assets/ok.svg, url: "https://example.com/a.png", area: logo, verdict: do, caption: Two locations. }',
   ].join('\n'));
   const dir = project({ 'brand/BRAND.md': doc, 'brand/assets/ok.svg': '<svg/>', 'outside.svg': '<svg/>' });
   const report = lint(doc, { file: join(dir, 'brand/BRAND.md') });
   assert.deepEqual(find(report, 'broken-ref').map((f) => f.path), ['visuals[1].file', 'visuals[2].file']);
-  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['visuals[3].verdict', 'visuals[3].shows', 'visuals[4]', 'visuals[5]']);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['visuals[3].verdict', 'visuals[4]', 'visuals[5]']);
   assert.deepEqual(find(report, 'missing-caption').map((f) => f.path), ['visuals[3]']);
 });
 
 test('visuals: https URLs are accepted, flagged as unverified and never fetched', () => {
-  const doc = withYaml('visuals:\n  - { url: "https://assets.example.com/a.jpg", shows: photography, verdict: do, caption: Window light. }\n  - { url: "http://assets.example.com/b.jpg", shows: photography, verdict: do, caption: Insecure. }\n  - { url: "file:///etc/passwd", shows: photography, verdict: do, caption: Not a web address. }');
+  const doc = withYaml('visuals:\n  - { url: "https://assets.example.com/a.jpg", area: photography, verdict: do, caption: Window light. }\n  - { url: "http://assets.example.com/b.jpg", area: photography, verdict: do, caption: Insecure. }\n  - { url: "file:///etc/passwd", area: photography, verdict: do, caption: Not a web address. }');
   const report = lint(doc);
   assert.deepEqual(find(report, 'unverified-url').map((f) => [f.path, f.severity]), [['visuals[0].url', 'info']]);
   assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['visuals[1].url', 'visuals[2].url']);
@@ -284,6 +284,110 @@ test('markdown images in prose: a missing local file is a warning, remote ones a
   const dir = project({ 'BRAND.md': doc, 'assets/ok.svg': '<svg/>' });
   const found = lint(doc, { file: join(dir, 'BRAND.md') }).findings;
   assert.deepEqual(found.map((f) => [f.rule, f.severity, f.path]), [['broken-ref', 'warning', 'image assets/gone.svg']]);
+});
+
+const SECTIONED = `---
+name: Test Brand
+rules:
+  - { verdict: do, rule: Front matter rule. }
+---
+
+## Overview
+
+\`\`\`yaml
+rules:
+  - { verdict: do, rule: "When in doubt, say less." }
+\`\`\`
+
+## Voice & Tone
+
+\`\`\`yaml
+rules:
+  - { verdict: dont, rule: No exclamation marks., exception: none }
+  - { verdict: do, rule: Name the logo colour in alt text., area: logo }
+\`\`\`
+
+## Logo
+
+\`\`\`yaml
+rules:
+  - { verdict: dont, rule: Never stretch the wordmark., exception: none }
+visuals:
+  - { url: "https://example.com/stretched.png", verdict: dont, caption: Stretched. }
+\`\`\`
+
+## Imagery
+
+\`\`\`yaml
+rules:
+  - { verdict: do, rule: One subject per image. }
+\`\`\`
+
+### Photography
+
+\`\`\`yaml
+rules:
+  - { verdict: dont, rule: Nobody looks at the camera., exception: Staff portraits. }
+visuals:
+  - { url: "https://example.com/hands.jpg", verdict: do, caption: Hands mid-task. }
+\`\`\`
+`;
+
+test('rules and visuals: written in their sections, tagged with the area they sit in', () => {
+  const { rules, visuals } = collect(SECTIONED);
+  assert.deepEqual(rules.map((r) => [r.area, r.rule]), [
+    ['general', 'Front matter rule.'],
+    ['general', 'When in doubt, say less.'],
+    ['voice', 'No exclamation marks.'],
+    ['logo', 'Name the logo colour in alt text.'],
+    ['logo', 'Never stretch the wordmark.'],
+    ['imagery', 'One subject per image.'],
+    ['photography', 'Nobody looks at the camera.'],
+  ]);
+  assert.deepEqual(visuals.map((v) => v.area), ['logo', 'photography']);
+  assert.deepEqual(collect(SECTIONED, { area: 'Logo' }).rules.map((r) => r.rule), ['Name the logo colour in alt text.', 'Never stretch the wordmark.']);
+});
+
+test('rules and visuals may repeat across blocks; other keys still may not', () => {
+  const report = lint(SECTIONED);
+  assert.deepEqual(rulesOf(report), ['unverified-url']);
+  const twice = lint(`${VALID}\n\`\`\`yaml\nrules:\n  - { verdict: do, rule: A. }\nvoice:\n  person: we\n\`\`\`\n\n\`\`\`yaml\nrules:\n  - { verdict: do, rule: B. }\nvoice:\n  person: you\n\`\`\`\n`);
+  assert.deepEqual(rulesOf(twice), ['duplicate-key']);
+  assert.deepEqual(rulesOf(lint(withYaml('rules:\n  verdict: do'))), ['invalid-yaml']);
+});
+
+test('rules: verdict and text are required; a dont names its exception', () => {
+  const doc = withYaml([
+    'rules:',
+    '  - { verdict: dont, rule: Never centre body text. }',
+    '  - { verdict: dont, rule: No emoji., exception: none }',
+    '  - { verdict: maybe, rule: Hmm. }',
+    '  - { verdict: do }',
+    '  - { verdict: do, rule: Use the logo file., visuals: [assets/gone.png], why: because }',
+  ].join('\n'));
+  const dir = project({ 'BRAND.md': doc });
+  const report = lint(doc, { file: join(dir, 'BRAND.md') });
+  assert.deepEqual(find(report, 'missing-exception').map((f) => [f.path, f.severity]), [['rules[0]', 'info']]);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['rules[2].verdict', 'rules[3].rule']);
+  assert.deepEqual(find(report, 'broken-ref').map((f) => f.path), ['rules[4].visuals[0]']);
+  assert.deepEqual(find(report, 'unknown-property').map((f) => f.path), ['rules[4].why']);
+});
+
+test('voice examples: both lines required; the rewrite must not use avoided words', () => {
+  const doc = withYaml([
+    'vocabulary:', '  avoid:', '    seamless: say what the steps are',
+    'voice:', '  examples:',
+    '    - { instead: A seamless checkout!, write: Checkout in two steps., why: A mechanism, not a mood. }',
+    '    - { instead: Fast., write: Seamless and fast. }',
+    '    - { instead: Hello. }',
+  ].join('\n'));
+  const report = lint(doc);
+  assert.deepEqual(find(report, 'self-violation').map((f) => f.path), ['voice.examples[1].write']);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['voice.examples[2].write']);
+});
+
+test("a Do's and Don'ts section is no longer part of the order, and is simply preserved", () => {
+  assert.deepEqual(lint(`${VALID}\n## Do's and Don'ts\n\nText.\n\n## Colors\n\nText.\n`).findings, []);
 });
 
 test('colour helpers', () => {
@@ -306,6 +410,14 @@ for (const example of ['panier-gris', 'lanternfish']) {
   });
 }
 
+test('example bolt: only the documented findings (missing logo artwork, gaps in the source)', () => {
+  const file = join(ROOT, 'examples', 'bolt', 'BRAND.md');
+  const report = lint(readFileSync(file, 'utf8'), { file });
+  assert.deepEqual(report.summary, { errors: 3, warnings: 0, infos: 6 });
+  assert.ok(find(report, 'broken-ref').every((f) => f.path.startsWith('logo.wordmark.colorways.')));
+  assert.deepEqual(rulesOf(report), ['adjective-only', 'broken-ref', 'unverified-license']);
+});
+
 test('cli: JSON output and exit code 0 on a clean file', () => {
   const out = execFileSync('node', [CLI, 'lint', join(ROOT, 'examples/panier-gris/BRAND.md')], { encoding: 'utf8' });
   assert.deepEqual(JSON.parse(out).summary, { errors: 0, warnings: 0, infos: 0 });
@@ -315,6 +427,14 @@ test('cli: exit code 1 on errors, reading from stdin', () => {
   const run = spawnSync('node', [CLI, 'lint', '-', '--format', 'text'], { input: '## Overview\n\nText.\n', encoding: 'utf8' });
   assert.equal(run.status, 1);
   assert.match(run.stdout, /missing-name/);
+});
+
+test('cli: extract lists rules and visuals for one area', () => {
+  const run = spawnSync('node', [CLI, 'extract', '-', '--area', 'photography'], { input: SECTIONED, encoding: 'utf8' });
+  assert.equal(run.status, 0);
+  const out = JSON.parse(run.stdout);
+  assert.deepEqual(out.rules.map((r) => r.rule), ['Nobody looks at the camera.']);
+  assert.equal(out.visuals.length, 1);
 });
 
 test('cli: exit code 2 on bad usage and unreadable files', () => {

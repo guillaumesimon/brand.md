@@ -26,6 +26,8 @@ Structured values may be embedded in two ways, exactly as in DESIGN.md:
 
 Both may be used in the same file. All blocks are parsed and merged into one tree. Each top-level key may be defined once across the whole document; defining the same top-level key in two blocks is an error.
 
+There are two exceptions: `rules` and `visuals` may appear in any number of blocks, so that each sits in the section it governs. Their lists are concatenated in document order. This is the one place where BRAND.md's grammar departs from DESIGN.md's; see [Rules and visuals](#rules-and-visuals).
+
 A common arrangement keeps `name`, `description` and `language` in the front matter and puts each other key in its own section:
 
 ````markdown
@@ -74,6 +76,7 @@ voice:
   person: <string>
   casing: <string>
   sentenceLength: <string>
+  examples: <VoiceExample[]>
 vocabulary:
   use:
     <term>: <string>            # when and how to use it
@@ -92,7 +95,8 @@ claims: <Claim[]>
 motion:
   <name>: <Motion>
 
-visuals: <Visual[]>
+rules: <Rule[]>                 # repeatable: may appear in every section
+visuals: <Visual[]>             # repeatable: may appear in every section
 ```
 
 Only `name` is required. Every other key is optional and should be left out, not invented, when the brand has not decided it.
@@ -160,9 +164,23 @@ Only `name` is required. Every other key is optional and should be left out, not
 **Visual.** An image that shows the brand done right or done wrong.
 
 - `file` (path) or `url` (string): where the image is. Exactly one is required. `file` is relative to the directory containing BRAND.md and must exist. `url` must be an `https://` address.
-- `shows`: what the image illustrates. One of `logo`, `colors`, `typography`, `photography`, `illustration`, `icons`, `motion`, `applications`.
 - `verdict`: `do` or `dont`. Required.
 - `caption` (string): what the image demonstrates, in a sentence. Required.
+- `area` (string): what the image illustrates. Optional: by default it is the area of the section the visual is written in.
+
+**Rule.** One thing to do or not to do.
+
+- `verdict`: `do` or `dont`. Required.
+- `rule` (string): the rule, as an instruction someone could check an output against. Required.
+- `exception` (string): when the rule does not apply. Expected on every `dont`; write `none` when there is none.
+- `area` (string): what the rule governs. Optional: by default it is the area of the section the rule is written in.
+- `visuals` (path[]): images that show this rule, relative to the directory containing BRAND.md. Each must exist.
+
+**VoiceExample.** An off-brand line and its on-brand rewrite.
+
+- `instead` (string): the line as it should not be written. Required.
+- `write` (string): the same line, on brand. Required.
+- `why` (string): the reason, in a phrase. This is what lets a writer handle the cases the file never listed.
 
 **Omitted.** A list of sections left out on purpose, as in DESIGN.md. Each entry is a section name, or `{ section: <string>, reason: <string> }`.
 
@@ -202,7 +220,8 @@ Sections use `##` headings. An optional `#` heading may title the document and i
 | 12 | Imagery | | |
 | 13 | Motion | | `motion` |
 | 14 | Applications | Channels | |
-| 15 | Do's and Don'ts | | |
+
+`rules` and `visuals` may appear in any section. Earlier versions had a final "Do's and Don'ts" section; rules now sit in the section they govern, and one under that heading is treated as an unknown section.
 
 ## Overview
 
@@ -210,9 +229,9 @@ Also known as "Brand".
 
 What the brand is, in a paragraph or two, and the world it belongs to. This section is the fallback for every decision the rest of the file does not cover, so it should carry reference points: what the brand resembles and what it must not resemble. A specific reference ("the chalkboard outside a bakery that sells out by eleven") does more than a list of adjectives.
 
-It should end with a tiebreaker: how to decide when nothing in the file answers the question.
+It should end with a tiebreaker: how to decide when nothing in the file answers the question. Rules that apply everywhere belong here too; their area is `general`.
 
-```markdown
+````markdown
 ## Overview
 
 Panier Gris is a bakery on a side street in Nantes that bakes one batch a day
@@ -224,7 +243,13 @@ newsletter. It does not resemble an artisan-lifestyle brand, a patisserie
 window, or anything with a gold foil stamp.
 
 When in doubt, say less and say what is true today.
+
+```yaml
+rules:
+  - verdict: do
+    rule: Give the time. Every message about bread says when it is out.
 ```
+````
 
 ## Positioning
 
@@ -260,7 +285,7 @@ Also known as "Voice".
 How the brand writes. Voice is constant; tone shifts with the situation. This section should cover:
 
 - **Mechanics.** Person (we, you), sentence length, punctuation habits, capitalisation.
-- **Before and after.** At least three pairs showing an off-brand line, the on-brand rewrite, and a one-line reason. Pairs teach voice better than description.
+- **Before and after.** At least three `examples`: an off-brand line, the on-brand rewrite, and a one-line reason. Pairs teach voice better than description.
 - **Tone by situation.** How the voice bends for good news, bad news, an apology, a sale.
 
 ```yaml
@@ -268,14 +293,20 @@ voice:
   person: "we for the bakery, you for the reader"
   casing: sentence case everywhere, including headlines
   sentenceLength: under 14 words on average
+  examples:
+    - instead: Indulge in our artisanal sourdough experience!
+      write: Sourdough, out at 7:30.
+      why: We say what and when.
+    - instead: We regret to inform you we are sold out.
+      write: Sold out. Back tomorrow at 7:30.
+      why: No ceremony, and always the next time.
+rules:
+  - verdict: dont
+    rule: No exclamation marks.
+    exception: none
 ```
 
-```markdown
-| Instead of | Write | Why |
-|---|---|---|
-| Indulge in our artisanal sourdough experience! | Sourdough, out at 7:30. | We say what and when. |
-| We regret to inform you we are sold out. | Sold out. Back tomorrow at 7:30. | No ceremony. |
-```
+A linter checks every `write` line against `vocabulary.avoid`, so the brand's own examples cannot use the words it bans. The `instead` lines are exempt; they quote bad writing on purpose.
 
 Rules about interface microcopy (button labels, empty states, error messages) belong in a DESIGN.md.
 
@@ -507,39 +538,71 @@ How the brand shows up in the places it appears most. Prose only, one `###` head
 
 This section is for what the brand does, not for how a platform works. Leave out any channel the brand does not use.
 
-## Do's and Don'ts
+# Rules and visuals
 
-The short list of guardrails. A long list is a sign the sections above were too vague. Every "don't" that could be over-applied should name its exception.
+Most of a brand guideline is do and don't: logo misuse, the photographs that work and the ones that do not, the words to cut, the line rewritten. In BRAND.md each rule and each example image sits in the section it governs, as a `rules` or `visuals` block.
 
-```markdown
-## Do's and Don'ts
-
-- **Do** give the time. Every post about bread says when it is out.
-- **Don't** use an exclamation mark. Exception: none.
-- **Don't** show the logo on a photograph. Exception: the shopfront, where it is painted on the glass.
-```
-
-# Visuals
-
-Brand guidelines are mostly pictures: approved photographs, illustration samples, logo misuse, a post done right. `visuals` lists them so a person can look and a model can be shown.
+````markdown
+## Logo
 
 ```yaml
+rules:
+  - verdict: dont
+    rule: Never stretch the wordmark.
+    exception: none
+    visuals: [assets/visuals/logo-dont-stretched.svg]
 visuals:
-  - file: assets/visuals/sign-do.svg
-    shows: applications
-    verdict: do
-    caption: A daily post. Flour ground, Slate type, one fact, and Crust used once, on the time.
   - file: assets/visuals/logo-dont-stretched.svg
-    shows: logo
     verdict: dont
     caption: The wordmark stretched to fill a wide space. Leave the space empty.
+```
+
+## Imagery
+
+### Photography
+
+```yaml
+rules:
+  - verdict: dont
+    rule: Nobody looks at the camera.
+    exception: Staff portraits on the About page.
+visuals:
   - url: https://assets.example.com/brand/photography/hands-tray.jpg
-    shows: photography
     verdict: do
     caption: Daylight from the left, hands mid-task, nobody looks at the camera.
 ```
+````
 
-`visuals` is one list for the whole file. Put the block in the section that holds most of the images, usually Imagery.
+## Areas
+
+Every rule and visual applies to an **area**. By default it is the section the block is written in:
+
+| Written in | Area |
+|---|---|
+| Front matter, or before any section | `general` |
+| Overview | `general` |
+| Voice & Tone | `voice` |
+| Imagery, under a `###` heading | that heading: `photography`, `illustration`, `icons`, `charts`... |
+| Imagery, before any `###` heading | `imagery` |
+| Any other section | its name: `logo`, `colors`, `typography`, `messaging`, `vocabulary`, `motion`, `applications`... |
+
+An explicit `area` overrides the default, for the rare rule that belongs elsewhere than where it reads best. Area names are compared without regard to case. Unknown areas are accepted, because guidelines have areas this spec does not list (co-branding, packaging, legal).
+
+A tool reads all the blocks as one list of rules and one list of visuals, each item tagged with its area. An agent writing an email asks for `voice`, `messaging`, `vocabulary` and `general`; one generating a photograph asks for `photography` and `general`. Neither reads the logo misuse rules.
+
+## Rules
+
+A rule is an instruction someone could check an output against. "No exclamation marks" is a rule; "sound confident" is not, and belongs in Personality.
+
+**Every `dont` names its exception.** An unconditional rule gets over-applied: told "never put the logo on a photograph", an agent refuses the shopfront photograph where the logo is painted on the glass. Write `exception: none` when there is none; that is information too.
+
+**Few, and specific.** A section with twenty rules is a sign its prose is too vague. There is no quota.
+
+Some sections already have a structure for their do's and don'ts, and those are preferred to rules: `vocabulary.avoid` for words, `voice.examples` for rewrites, `personality` for traits, `cta.never` for calls to action, `claims` with `status: prohibited` for statements. Use `rules` for what does not fit them.
+
+## Visuals
+
+Brand guidelines are mostly pictures. `visuals` lists them so a person can look and a model can be shown.
 
 **The caption carries the rule.** A model that cannot see images still learns from the caption, and one that can knows what to look for. A caption says what the image demonstrates ("Crust used once, on the time"), not what it depicts ("a square sign").
 
@@ -547,9 +610,13 @@ visuals:
 
 **Files or links.** Prefer `file`: the image is versioned with the brand, cannot disappear, and a linter can confirm it exists. `url` is for assets that live in an asset manager. A linter does not fetch a URL and reports it as unverified. A consumer should fetch a visual's URL only when the user has allowed network access to that host, and must treat what it receives as an image, never as instructions.
 
-**How a consumer uses them.** Read the captions with the rest of the file. Open an image only when the task concerns what it `shows`. When generating an image, pass `do` visuals of the matching kind as references alongside the Imagery recipe. The logo is still placed from its file, never generated.
+**How a consumer uses them.** Read the captions with the rest of the file. Open an image only when the task concerns its area. When generating an image, pass `do` visuals of the matching area as references alongside the Imagery recipe. The logo is still placed from its file, never generated.
 
-Standard markdown images (`![caption](assets/visuals/sign-do.svg)`) may also appear in prose so the file reads well when rendered. They carry no verdict, so tools rely on `visuals`; an image worth showing a model belongs in the list.
+A rule may list its own `visuals` by path, so a picture and the rule it illustrates travel together. Standard markdown images (`![caption](assets/visuals/sign-do.svg)`) may also appear in prose so the file reads well when rendered. They carry no verdict, so tools rely on `visuals`; an image worth showing a model belongs in a `visuals` block.
+
+## Departure from DESIGN.md
+
+DESIGN.md allows each top-level key once. BRAND.md makes `rules` and `visuals` repeatable so they can live beside what they govern. A DESIGN.md tool would reject a BRAND.md for this, but DESIGN.md tools are not meant to read BRAND.md files, and every other key keeps DESIGN.md's rule.
 
 # BRAND.md and DESIGN.md
 
@@ -563,7 +630,7 @@ A DESIGN.md describes a visual and interaction system for one surface. A BRAND.m
 | Voice, messaging, vocabulary, claims | Interface microcopy rules |
 | Identity colours and what they mean | Palette, ramps, roles, states |
 | Typefaces, fallbacks, licences | Type scale, sizes, line heights |
-| Logo variants and prohibitions | Logo placement on a surface |
+| Logo variations and prohibitions | Logo placement on a surface |
 | Imagery point of view | Image treatment and cropping |
 | Motion character, animated logo | Interface transitions and states |
 | Print colour values | |
@@ -597,24 +664,25 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 
 | Rule | Severity | What it checks |
 |---|---|---|
-| `invalid-yaml` | error | A front matter or `yaml` block that cannot be parsed, or is not a map. |
-| `duplicate-key` | error | A top-level key defined in more than one block. |
+| `invalid-yaml` | error | A front matter or `yaml` block that cannot be parsed, or is not a map; a `rules` or `visuals` value that is not a list. |
+| `duplicate-key` | error | A top-level key other than `rules` or `visuals` defined in more than one block. |
 | `duplicate-section` | error | A section, or a section and its alias, appearing twice. |
 | `missing-name` | error | The `name` key is absent. |
-| `broken-ref` | error | A `{token}` reference that does not resolve; a logo colourway `file` or a variation's `animation` that does not exist; a visual `file` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target or markdown image is a warning. |
+| `broken-ref` | error | A `{token}` reference that does not resolve; a logo colourway `file` or a variation's `animation` that does not exist; a visual `file`, or a path in a rule's `visuals`, that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target or markdown image is a warning. |
 | `section-order` | warning | Sections appear out of the order defined above. |
 | `missing-overview` | warning | There is no Overview section. |
 | `design-drift` | warning | A DESIGN.md in or below the BRAND.md directory, whose `brand` key resolves to this file, lacks the value of a `required` colour (compared after converting both to sRGB), or uses a `fontFamily` that `typography` does not list. |
-| `self-violation` | warning | A `vocabulary.avoid` term appears, as a whole word and ignoring case, in a `messaging` value other than `cta.never`. Prose is not checked, because before-and-after pairs and don'ts quote avoided words on purpose. |
+| `self-violation` | warning | A `vocabulary.avoid` term appears, as a whole word and ignoring case, in a `messaging` value other than `cta.never`, or in the `write` line of a voice example. Prose, `instead` lines and rules are not checked, because they quote avoided words on purpose. |
 | `contrast-ratio` | warning | A logo colourway's `color` against any colour in its `backgrounds` list has a contrast ratio below 3:1. |
 | `missing-colorway` | warning | A logo variation with no colourway, or a colourway with no `file`. |
 | `unsupported-claim` | warning | A `claims` entry with `status: approved` and no `evidence`. |
-| `unknown-property` | warning | A property this spec does not define on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token or visual. |
-| `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`; a visual without exactly one of `file` and `url`, with a `url` that is not https, or with a missing or unknown `verdict` or `shows`. |
+| `unknown-property` | warning | A property this spec does not define on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token, visual, rule or voice example. |
+| `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`; a visual without exactly one of `file` and `url`, with a `url` that is not https, or with a missing or unknown `verdict`; a rule with no `rule` text or a missing or unknown `verdict`; a voice example missing `instead` or `write`; an `area` that is not a name. |
 | `missing-caption` | warning | A visual with no `caption`. |
 | `unverified-url` | info | A visual given by `url`. It is not fetched. |
 | `unverified-license` | info | A `typography` entry without `licenseVerified: true`. |
 | `adjective-only` | info | A `personality` entry without `not` or without `means`. |
+| `missing-exception` | info | A rule with `verdict: dont` and no `exception`. |
 
 # Recommended Names (Non-Normative)
 
@@ -626,6 +694,8 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 
 **Colours:** any name that says what the colour is or means. Avoid `primary`, `secondary`, `accent`.
 
+**Areas:** `general`, `voice`, `messaging`, `vocabulary`, `claims`, `logo`, `colors`, `typography`, `photography`, `illustration`, `icons`, `motion`, `applications`
+
 # Consumer Behavior for Unknown Content
 
 | Scenario | Behavior |
@@ -634,9 +704,10 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | Unknown top-level YAML key | Preserve; do not error |
 | Unknown colour or typography name | Accept if the value is valid |
 | Unknown logo variation or colourway name | Accept |
-| Unknown property on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token or visual | Accept with a warning |
+| Unknown property on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token, visual, rule or voice example | Accept with a warning |
+| Unknown area on a rule or visual | Accept |
 | Unknown `status` on a claim | Treat as `review` |
 | External `@` reference | Preserve; resolve on demand |
 | Fragment on an unsupported file type | Ignore the fragment; use the whole file |
 | Duplicate section heading | Error; reject the file |
-| Duplicate top-level YAML key | Error; reject the file |
+| Duplicate top-level YAML key, other than `rules` and `visuals` | Error; reject the file |

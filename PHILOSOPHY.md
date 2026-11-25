@@ -34,13 +34,15 @@ personality:
 
 "Clear, concise and human" cannot be followed, because every writer believes they already are. A rewrite can be followed.
 
-```markdown
-| Instead of | Write | Why |
-|---|---|---|
-| Never miss a critical alert again. | Pages reach a person in under a minute, or go to the next one. | A mechanism can be believed. A promise cannot. |
+```yaml
+voice:
+  examples:
+    - instead: Never miss a critical alert again.
+      write: Pages reach a person in under a minute, or go to the next one.
+      why: A mechanism can be believed. A promise cannot.
 ```
 
-The third column matters most. The pair shows one case; the reason lets a writer handle the cases the file never listed.
+The `why` matters most. The pair shows one case; the reason lets a writer handle the cases the file never listed.
 
 ## A rule counts only if an output can be checked against it
 
@@ -52,12 +54,18 @@ This is also what decides which parts of a brand get structured values. A list o
 
 An unconditional rule gets over-applied. Told "never put the logo on a photograph", an agent will refuse to use the photograph of the shopfront where the logo is painted on the glass.
 
-```markdown
-- **Don't** put the logo on a photograph. Exception: the shopfront,
-  where it is painted on the glass.
+```yaml
+rules:
+  - verdict: dont
+    rule: Don't put the logo on a photograph.
+    exception: The shopfront, where it is painted on the glass.
 ```
 
-If no exception exists, say "Exception: none." That is information too. And if the exceptions cannot be listed, the rule is probably too broad.
+If no exception exists, write `exception: none`. That is information too. And if the exceptions cannot be listed, the rule is probably too broad.
+
+## A rule sits next to what it governs
+
+A guideline's don'ts used to collect at the end, in one long list that every reader had to get through. A rule about stretching the logo is no use to someone writing an email. So each rule is written in the section it concerns, and takes that section as its area. An agent can then ask for the voice rules alone, or the photography rules alone, and read nothing else.
 
 ## Colours are named for what they mean and described in words
 
