@@ -115,11 +115,12 @@ Sections use `##` headings. Only Overview is required. Those present appear in t
 | 7 | Claims | `claims` | What may be asserted, with evidence and status |
 | 8 | Vocabulary | `vocabulary` | Words to use, words to avoid and their replacements |
 | 9 | Logo | `logo` | Variants, files, clear space, permitted backgrounds |
-| 10 | Colors | `colors`, `required` | Identity colours, named by meaning and described in words |
+| 10 | Colors | `colors`, `required`, `print` | Identity colours, named by meaning and described in words, with print values |
 | 11 | Typography | `typography` | Typefaces, fallbacks, licences |
 | 12 | Imagery | | Photography, illustration, icons, generation recipes |
-| 13 | Applications | | Per-channel rules |
-| 14 | Do's and Don'ts | | Guardrails, each with its exception |
+| 13 | Motion | `motion` | How the brand moves: character, animated logo, what never moves |
+| 14 | Applications | | Per-channel rules |
+| 15 | Do's and Don'ts | | Guardrails, each with its exception |
 
 ### Schema
 
@@ -134,8 +135,10 @@ colors:
 typography:
   <role>: { fontFamily, fontWeight, fallback, license, licenseVerified }
 required: <token reference[]>
+print:
+  <color-name>: { cmyk, pantone, note }
 logo:
-  <variant>: { file, color, backgrounds, minSize, clearSpace }
+  <variant>: { file, color, backgrounds, minSize, clearSpace, animation }
 personality:
   - { is, not, means }
 voice: { person, casing, sentenceLength }
@@ -150,6 +153,8 @@ messaging:
   cta: { primary, never }
 claims:
   - { claim, evidence, status: approved | review | prohibited }
+motion:
+  <name>: { duration, delay, timingFunction }
 ```
 
 Token references (`{colors.crust}`) and external references (`` `@guides/photography.md` ``) work as they do in DESIGN.md.
@@ -181,6 +186,7 @@ The spec defines the rules so any tool behaves the same way; the linter in this 
 | `contrast-ratio` | warning | A logo against a permitted background falls below 3:1 |
 | `unsupported-claim` | warning | An approved claim with no evidence |
 | `unknown-property` | warning | A property the spec does not define |
+| `invalid-value` | warning | A malformed CMYK value or motion duration |
 | `unverified-license` | info | A typeface whose licence is not verified |
 | `adjective-only` | info | A personality trait with no `not` or `means` |
 

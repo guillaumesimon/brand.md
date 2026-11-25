@@ -202,6 +202,37 @@ test('design-drift: a DESIGN.md that does not link to this brand is ignored', ()
   assert.deepEqual(lint(BRAND_FOR_DRIFT, { file: join(dir, 'BRAND.md') }).findings, []);
 });
 
+test('print: a clean entry passes; an unknown colour, bad CMYK and unknown property are reported', () => {
+  const clean = withYaml('colors:\n  crust: "#8A4B1F"\n  light:\n    paper: "#FFFFFF"\nprint:\n  crust:\n    cmyk: "0 46 78 46"\n    pantone: "000 C"\n    note: Uncoated.\n  light.paper:\n    cmyk: "0/0/0/0"');
+  assert.deepEqual(lint(clean).findings, []);
+
+  const broken = withYaml('colors:\n  crust: "#8A4B1F"\nprint:\n  crumb:\n    cmyk: "0 46 78 46"\n  crust:\n    cmyk: "0 46 178"\n    ral: 8003');
+  const report = lint(broken);
+  assert.deepEqual(find(report, 'broken-ref').map((f) => f.path), ['print.crumb']);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['print.crust.cmyk']);
+  assert.deepEqual(find(report, 'unknown-property').map((f) => f.path), ['print.crust.ral']);
+});
+
+test('motion: durations must be milliseconds, and tokens can be referenced', () => {
+  const clean = `${withYaml('motion:\n  settle:\n    duration: 240ms\n    delay: 0ms\n    timingFunction: ease-out')}\nThings settle in {motion.settle.duration}.\n`;
+  assert.deepEqual(lint(clean).findings, []);
+
+  const report = lint(withYaml('motion:\n  settle:\n    duration: 0.24s\n    delay: fast\n    easing: ease-out'));
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['motion.settle.duration', 'motion.settle.delay']);
+  assert.deepEqual(find(report, 'unknown-property').map((f) => f.path), ['motion.settle.easing']);
+});
+
+test('motion: the section sits between Imagery and Applications', () => {
+  assert.deepEqual(lint(`${VALID}\n## Imagery\n\nText.\n\n## Motion\n\nText.\n\n## Applications\n\nText.\n`).findings, []);
+  assert.deepEqual(rulesOf(lint(`${VALID}\n## Applications\n\nText.\n\n## Motion\n\nText.\n`)), ['section-order']);
+});
+
+test('logo animation: checked like the logo file', () => {
+  const doc = withYaml('logo:\n  wordmark:\n    file: assets/wordmark.svg\n    animation: assets/wordmark.mov');
+  const dir = project({ 'BRAND.md': doc, 'assets/wordmark.svg': '<svg/>' });
+  assert.deepEqual(find(lint(doc, { file: join(dir, 'BRAND.md') }), 'broken-ref').map((f) => f.path), ['logo.wordmark.animation']);
+});
+
 test('colour helpers', () => {
   assert.deepEqual(toRgb('#fff'), [255, 255, 255]);
   assert.deepEqual(toRgb('#0B1F2AFF'), [11, 31, 42]);

@@ -6,7 +6,7 @@ import { externalRefs, parseDocument, resolvePath, stringLeaves, stripCodeSpans,
 
 export const SECTION_ORDER = [
   'overview', 'positioning', 'audience', 'personality', 'voice & tone', 'messaging', 'claims',
-  'vocabulary', 'logo', 'colors', 'typography', 'imagery', 'applications', "do's and don'ts",
+  'vocabulary', 'logo', 'colors', 'typography', 'imagery', 'motion', 'applications', "do's and don'ts",
 ];
 
 const SECTION_ALIASES = {
@@ -19,7 +19,9 @@ const SECTION_ALIASES = {
 
 const KNOWN_PROPERTIES = {
   typeface: ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'fontFeature', 'fontVariation', 'fallback', 'license', 'licenseVerified'],
-  logo: ['file', 'color', 'backgrounds', 'minSize', 'clearSpace'],
+  logo: ['file', 'color', 'backgrounds', 'minSize', 'clearSpace', 'animation'],
+  'print colour': ['cmyk', 'pantone', 'note'],
+  'motion token': ['duration', 'delay', 'timingFunction'],
   trait: ['is', 'not', 'means'],
   pillar: ['claim', 'proof'],
   claim: ['claim', 'evidence', 'status'],
@@ -39,6 +41,7 @@ export const RULES = {
   'contrast-ratio': 'warning',
   'unsupported-claim': 'warning',
   'unknown-property': 'warning',
+  'invalid-value': 'warning',
   'unverified-license': 'info',
   'adjective-only': 'info',
 };
@@ -50,6 +53,12 @@ const isMap = (value) => value !== null && typeof value === 'object' && !Array.i
 const asList = (value) => (Array.isArray(value) ? value : []);
 const normalizeTitle = (title) => title.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
 const canonicalSection = (title) => SECTION_ALIASES[normalizeTitle(title)] ?? normalizeTitle(title);
+
+/** True for four numbers from 0 to 100 separated by spaces, commas or slashes. */
+function isCmyk(value) {
+  const parts = String(value).trim().split(/[\s,/]+/).filter(Boolean);
+  return parts.length === 4 && parts.every((part) => /^\d+(\.\d+)?%?$/.test(part) && parseFloat(part) <= 100);
+}
 
 /** A value that is exactly one `{token}` reference resolves to its target; anything else is literal. */
 function deref(tree, value) {
@@ -171,12 +180,14 @@ export function lint(markdown, options = {}) {
       const path = `logo.${name}`;
       if (!isMap(variant)) continue;
       unknownProperties('logo', variant, path);
-      if (typeof variant.file === 'string' && dir) {
-        const target = resolve(dir, variant.file);
-        if (variant.file.startsWith('/') || !insideDir(dir, target)) {
-          report('broken-ref', `${path}.file`, `Logo file "${variant.file}" is outside the BRAND.md directory.`);
+      for (const key of ['file', 'animation']) {
+        const value = variant[key];
+        if (typeof value !== 'string' || !dir) continue;
+        const target = resolve(dir, value);
+        if (value.startsWith('/') || !insideDir(dir, target)) {
+          report('broken-ref', `${path}.${key}`, `Logo ${key} "${value}" is outside the BRAND.md directory.`);
         } else if (!existsSync(target)) {
-          report('broken-ref', `${path}.file`, `Logo file "${variant.file}" does not exist.`);
+          report('broken-ref', `${path}.${key}`, `Logo ${key} "${value}" does not exist.`);
         }
       }
       const ink = toRgb(deref(tree, variant.color));
@@ -187,6 +198,34 @@ export function lint(markdown, options = {}) {
         const ratio = contrastRatio(ink, ground);
         if (ratio < MIN_LOGO_CONTRAST) {
           report('contrast-ratio', `${path}.backgrounds[${index}]`, `Logo colour ${variant.color} on ${background} has a contrast ratio of ${ratio.toFixed(2)}:1, below ${MIN_LOGO_CONTRAST}:1.`);
+        }
+      }
+    }
+  }
+
+  // Print: every entry names a real colour and carries a well-formed CMYK build.
+  if (isMap(tree.print)) {
+    for (const [name, spec] of Object.entries(tree.print)) {
+      const path = `print.${name}`;
+      if (typeof resolvePath(isMap(tree.colors) ? tree.colors : {}, name) !== 'string') {
+        report('broken-ref', path, `Print values are given for "${name}", which is not a colour in \`colors\`.`);
+      }
+      if (!isMap(spec)) continue;
+      unknownProperties('print colour', spec, path);
+      if (spec.cmyk !== undefined && !isCmyk(spec.cmyk)) {
+        report('invalid-value', `${path}.cmyk`, `CMYK value "${spec.cmyk}" must be four numbers from 0 to 100.`);
+      }
+    }
+  }
+
+  // Motion: durations are milliseconds.
+  if (isMap(tree.motion)) {
+    for (const [name, token] of Object.entries(tree.motion)) {
+      if (!isMap(token)) continue;
+      unknownProperties('motion token', token, `motion.${name}`);
+      for (const key of ['duration', 'delay']) {
+        if (token[key] !== undefined && !/^\d+(\.\d+)?ms$/.test(String(token[key]))) {
+          report('invalid-value', `motion.${name}.${key}`, `Motion ${key} "${token[key]}" must be a number followed by ms.`);
         }
       }
     }

@@ -63,6 +63,8 @@ colors:
 typography:
   <role>: <Typeface>
 required: <TokenReference[]>
+print:
+  <color-name>: <PrintColor>
 
 logo:
   <variant>: <LogoVariant>
@@ -86,6 +88,9 @@ messaging:
     primary: <string>
     never: <string[]>
 claims: <Claim[]>
+
+motion:
+  <name>: <Motion>
 ```
 
 Only `name` is required. Every other key is optional and should be left out, not invented, when the brand has not decided it.
@@ -108,6 +113,20 @@ Only `name` is required. Every other key is optional and should be left out, not
 
 `fontSize`, `lineHeight` and `letterSpacing` are accepted but discouraged. They form a type scale, which belongs to a design system.
 
+**PrintColor.** The print specification of a colour in `colors`. The key is the colour's name (its dot-separated path when colours are grouped) and must match an existing colour.
+
+- `cmyk` (string): four percentages from 0 to 100 for cyan, magenta, yellow and black, separated by spaces, commas or slashes: `"0 46 78 46"`
+- `pantone` (string): the Pantone reference, with its suffix: `"178 C"`
+- `note` (string): anything a printer needs to know, such as a fallback order or a paper stock
+
+**Duration.** A string with an `ms` suffix: `240ms`.
+
+**Motion.** DESIGN.md's Motion object:
+
+- `duration` (Duration)
+- `delay` (Duration)
+- `timingFunction` (string): a CSS easing function
+
 **LogoVariant.**
 
 - `file` (path): the artwork, relative to the directory containing BRAND.md. It must exist.
@@ -115,6 +134,7 @@ Only `name` is required. Every other key is optional and should be left out, not
 - `backgrounds` (token reference[]): the colours this variant may sit on. (Not `on`, which YAML 1.1 parsers read as the boolean `true`.)
 - `minSize` (Dimension): the smallest width at which it stays legible
 - `clearSpace` (string): the empty space around it, stated as a relationship ("the height of the letter n on every side"), not a pixel value
+- `animation` (path): the animated version of this variant, if one exists. Same rules as `file`.
 
 **Trait.** An object with three strings:
 
@@ -163,11 +183,12 @@ Sections use `##` headings. An optional `#` heading may title the document and i
 | 7 | Claims | | `claims` |
 | 8 | Vocabulary | Terminology | `vocabulary` |
 | 9 | Logo | | `logo` |
-| 10 | Colors | | `colors`, `required` |
+| 10 | Colors | | `colors`, `required`, `print` |
 | 11 | Typography | Typefaces | `typography` |
 | 12 | Imagery | | |
-| 13 | Applications | Channels | |
-| 14 | Do's and Don'ts | | |
+| 13 | Motion | | `motion` |
+| 14 | Applications | Channels | |
+| 15 | Do's and Don'ts | | |
 
 ## Overview
 
@@ -354,6 +375,20 @@ For each colour the prose states:
 
 `required` lists the colours and typefaces every expression of the brand must carry. Everything else is available, not obligatory. A brand with one colour declares one colour.
 
+**Print.** A colour that will be printed needs more than a screen value. `print` gives each one its CMYK build and, where one has been chosen, its Pantone reference:
+
+```yaml
+print:
+  crust:
+    cmyk: "0 46 78 46"
+    note: Uncoated stock. Proof against a baked loaf, not a screen.
+  flour:
+    cmyk: "0 2 6 4"
+    note: On the kraft bags, leave unprinted; the paper is the colour.
+```
+
+Leave out a colour that is never printed. Do not derive a Pantone reference from a hex value: a Pantone match is a choice someone makes with a swatch book, and an invented one will be sent to a printer.
+
 Colour ramps, semantic roles, states and contrast pairs belong in a DESIGN.md.
 
 ## Typography
@@ -398,6 +433,32 @@ warm brown and off-white palette, no props, no text."
 Never: stock smiles, rustic twine, overhead flat-lays.
 ```
 
+## Motion
+
+How the brand moves when it appears in video, on a screen in a venue, or as an animated logo. This is the brand's character in motion, the part that should survive a redesign: whether things glide or snap, how many things move at once, what never moves.
+
+The prose states the character with a reference, what moves, and what does not. Where the logo has an animated version, it is declared on the logo variant with `animation` and its use is described here.
+
+```yaml
+motion:
+  settle:
+    duration: 240ms
+    delay: 0ms
+    timingFunction: cubic-bezier(0.2, 0, 0, 1)
+```
+
+```markdown
+## Motion
+
+Things arrive and settle, like a boat coming alongside. One element moves at
+a time. Nothing bounces, nothing loops, nothing flashes.
+
+- **Settle** {motion.settle.duration}: how anything enters.
+- Never animate the wordmark. Exception: none.
+```
+
+`motion` tokens are optional and are named for what they are for (`settle`, `pulse`), not for their speed. Interface transitions, component states and reduced-motion handling belong in a DESIGN.md, which may reuse these values.
+
 ## Applications
 
 Also known as "Channels".
@@ -432,7 +493,9 @@ A DESIGN.md describes a visual and interaction system for one surface. A BRAND.m
 | Typefaces, fallbacks, licences | Type scale, sizes, line heights |
 | Logo variants and prohibitions | Logo placement on a surface |
 | Imagery point of view | Image treatment and cropping |
-| | Layout, spacing, shape, elevation, motion, components |
+| Motion character, animated logo | Interface transitions and states |
+| Print colour values | |
+| | Layout, spacing, shape, elevation, components |
 
 **One brand, several designs.** A brand may have a DESIGN.md for its product, another for its marketing site, another for its decks. A DESIGN.md may name its brand in its front matter:
 
@@ -466,14 +529,15 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | `duplicate-key` | error | A top-level key defined in more than one block. |
 | `duplicate-section` | error | A section, or a section and its alias, appearing twice. |
 | `missing-name` | error | The `name` key is absent. |
-| `broken-ref` | error | A `{token}` reference that does not resolve; a logo `file` that does not exist; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target is a warning. |
+| `broken-ref` | error | A `{token}` reference that does not resolve; a logo `file` or `animation` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target is a warning. |
 | `section-order` | warning | Sections appear out of the order defined above. |
 | `missing-overview` | warning | There is no Overview section. |
 | `design-drift` | warning | A DESIGN.md in or below the BRAND.md directory, whose `brand` key resolves to this file, lacks the value of a `required` colour (compared after converting both to sRGB), or uses a `fontFamily` that `typography` does not list. |
 | `self-violation` | warning | A `vocabulary.avoid` term appears, as a whole word and ignoring case, in a `messaging` value other than `cta.never`. Prose is not checked, because before-and-after pairs and don'ts quote avoided words on purpose. |
 | `contrast-ratio` | warning | A logo variant's `color` against any colour in its `backgrounds` list has a contrast ratio below 3:1. |
 | `unsupported-claim` | warning | A `claims` entry with `status: approved` and no `evidence`. |
-| `unknown-property` | warning | A property this spec does not define on a typeface, logo variant, trait, pillar or claim. |
+| `unknown-property` | warning | A property this spec does not define on a typeface, logo variant, trait, pillar, claim, print colour or motion token. |
+| `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`. |
 | `unverified-license` | info | A `typography` entry without `licenseVerified: true`. |
 | `adjective-only` | info | A `personality` entry without `not` or without `means`. |
 
@@ -493,7 +557,7 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | Unknown top-level YAML key | Preserve; do not error |
 | Unknown colour or typography name | Accept if the value is valid |
 | Unknown logo variant name | Accept |
-| Unknown property on a typeface, logo variant, trait, pillar or claim | Accept with a warning |
+| Unknown property on a typeface, logo variant, trait, pillar, claim, print colour or motion token | Accept with a warning |
 | Unknown `status` on a claim | Treat as `review` |
 | External `@` reference | Preserve; resolve on demand |
 | Fragment on an unsupported file type | Ignore the fragment; use the whole file |

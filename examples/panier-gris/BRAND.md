@@ -163,6 +163,16 @@ colors:
   slate: "#3A3D40"
   butter: "#E9C46A"
 required: ["{colors.flour}", "{colors.slate}"]
+print:
+  crust:
+    cmyk: "0 46 78 46"
+    note: Uncoated stock. Proof against a baked loaf, not a screen.
+  slate:
+    cmyk: "9 5 0 75"
+    note: One-colour jobs (bags, stamps) are printed in Slate only.
+  flour:
+    cmyk: "0 2 6 4"
+    note: On kraft bags, leave unprinted; the paper is the colour.
 ```
 
 - **Flour** {colors.flour} is the ground: the paper bag, the wall, the page. In words: a warm off-white with a faint yellow cast, like unbleached flour; not cream, not pure white. It covers most of any surface.
@@ -171,6 +181,8 @@ required: ["{colors.flour}", "{colors.slate}"]
 - **Butter** {colors.butter} is optional and rare: a highlight behind a single word. In words: a soft egg-yolk yellow; not gold, not lemon. Never used for text.
 
 No gradients. No colour outside these four.
+
+Butter is never printed. No Pantone references have been chosen yet; the CMYK builds above are starting points to proof, not approved matches.
 
 ## Typography
 
@@ -206,6 +218,10 @@ Never: stock smiles, rustic twine, slate serving boards, overhead flat-lays, ste
 ### Illustration
 
 None. Where a drawing seems needed, use a photograph or a sentence.
+
+## Motion
+
+Panier Gris does not move. No animated logo, no video intros, no animated text over photographs. A film of the shop is a single unedited shot with its own sound.
 
 ## Applications
 

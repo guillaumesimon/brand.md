@@ -167,6 +167,14 @@ colors:
   foam: "#F3F1EA"
   kelp: "#2F6F62"
 required: ["{colors.abyss}", "{colors.lure}", "{typography.display}"]
+print:
+  abyss:
+    cmyk: "74 26 0 84"
+    note: Large solid areas need a rich-black build agreed with the printer.
+  lure:
+    cmyk: "0 26 75 5"
+  foam:
+    cmyk: "0 1 4 5"
 ```
 
 - **Abyss** {colors.abyss} is the water: the default ground for anything the brand makes. In words: a very dark blue-black with a green undertone, like the sea at night under a lamp; not navy, not pure black.
@@ -175,6 +183,8 @@ required: ["{colors.abyss}", "{colors.lure}", "{typography.display}"]
 - **Kelp** {colors.kelp} is optional, for secondary panels and charts. In words: a muted sea green; not teal, not emerald.
 
 Red is never a brand colour. It belongs to the product, where it means something is wrong.
+
+Print is rare (conference stands, stickers). The CMYK builds are conversions to proof; no Pantone references have been chosen.
 
 ## Typography
 
@@ -215,6 +225,29 @@ Flat shapes in Abyss, Foam and Kelp with one Lure point, always a single dot or 
 ### Charts
 
 Charts are the brand's most common image. One series in Lure, everything else in Foam at reduced strength. Label lines directly; no legends.
+
+## Motion
+
+```yaml
+motion:
+  settle:
+    duration: 240ms
+    delay: 0ms
+    timingFunction: cubic-bezier(0.2, 0, 0, 1)
+  pulse:
+    duration: 1600ms
+    delay: 0ms
+    timingFunction: ease-in-out
+```
+
+Lanternfish moves like something seen through deep water: slowly, one thing at a time, and then it is still. A lighthouse, not a notification.
+
+- **Settle** ({motion.settle.duration}) is how anything arrives: it eases in and stops. Nothing bounces or overshoots.
+- **Pulse** ({motion.pulse.duration}) belongs to the Lure dot alone. It brightens and dims once to show who has the watch, then rests.
+- One element moves at a time. Text never animates letter by letter.
+- The wordmark has no animated version and is never animated. Exception: none.
+
+Never: flashing, shaking, sirens, countdowns, looping backgrounds. Exception: a product recording that shows a firing page as it really behaves.
 
 ## Applications
 
