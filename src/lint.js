@@ -19,7 +19,8 @@ const SECTION_ALIASES = {
 
 const KNOWN_PROPERTIES = {
   typeface: ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'fontFeature', 'fontVariation', 'fallback', 'license', 'licenseVerified'],
-  logo: ['file', 'color', 'backgrounds', 'minSize', 'clearSpace', 'animation'],
+  'logo variation': ['use', 'minSize', 'clearSpace', 'animation', 'colorways'],
+  'logo colourway': ['file', 'color', 'backgrounds'],
   'print colour': ['cmyk', 'pantone', 'note'],
   'motion token': ['duration', 'delay', 'timingFunction'],
   visual: ['file', 'url', 'shows', 'verdict', 'caption'],
@@ -44,6 +45,7 @@ export const RULES = {
   'unknown-property': 'warning',
   'invalid-value': 'warning',
   'missing-caption': 'warning',
+  'missing-colorway': 'warning',
   'unverified-url': 'info',
   'unverified-license': 'info',
   'adjective-only': 'info',
@@ -180,30 +182,43 @@ export function lint(markdown, options = {}) {
     }
   };
 
-  // Logo: files exist, and each variant is legible on its permitted backgrounds.
+  const localTarget = (value, path, what) => {
+    if (!dir) return;
+    const target = resolve(dir, value);
+    if (value.startsWith('/') || !insideDir(dir, target)) {
+      report('broken-ref', path, `${what} "${value}" is outside the BRAND.md directory.`);
+    } else if (!existsSync(target)) {
+      report('broken-ref', path, `${what} "${value}" does not exist.`);
+    }
+  };
+
+  // Logo: each variation has colourways; each colourway's file exists and is
+  // legible on its permitted backgrounds.
   if (isMap(tree.logo)) {
-    for (const [name, variant] of Object.entries(tree.logo)) {
+    for (const [name, variation] of Object.entries(tree.logo)) {
       const path = `logo.${name}`;
-      if (!isMap(variant)) continue;
-      unknownProperties('logo', variant, path);
-      for (const key of ['file', 'animation']) {
-        const value = variant[key];
-        if (typeof value !== 'string' || !dir) continue;
-        const target = resolve(dir, value);
-        if (value.startsWith('/') || !insideDir(dir, target)) {
-          report('broken-ref', `${path}.${key}`, `Logo ${key} "${value}" is outside the BRAND.md directory.`);
-        } else if (!existsSync(target)) {
-          report('broken-ref', `${path}.${key}`, `Logo ${key} "${value}" does not exist.`);
-        }
+      if (!isMap(variation)) continue;
+      unknownProperties('logo variation', variation, path);
+      if (typeof variation.animation === 'string') localTarget(variation.animation, `${path}.animation`, 'Logo animation');
+      const colorways = isMap(variation.colorways) ? Object.entries(variation.colorways) : [];
+      if (colorways.length === 0) {
+        report('missing-colorway', path, `Logo variation "${name}" has no colourway, so there is no file to place.`);
       }
-      const ink = toRgb(deref(tree, variant.color));
-      if (!ink) continue;
-      for (const [index, background] of asList(variant.backgrounds).entries()) {
-        const ground = toRgb(deref(tree, background));
-        if (!ground) continue;
-        const ratio = contrastRatio(ink, ground);
-        if (ratio < MIN_LOGO_CONTRAST) {
-          report('contrast-ratio', `${path}.backgrounds[${index}]`, `Logo colour ${variant.color} on ${background} has a contrast ratio of ${ratio.toFixed(2)}:1, below ${MIN_LOGO_CONTRAST}:1.`);
+      for (const [colorwayName, colorway] of colorways) {
+        const where = `${path}.colorways.${colorwayName}`;
+        if (!isMap(colorway)) continue;
+        unknownProperties('logo colourway', colorway, where);
+        if (typeof colorway.file === 'string') localTarget(colorway.file, `${where}.file`, 'Logo file');
+        else report('missing-colorway', where, `Colourway "${colorwayName}" of "${name}" has no \`file\`.`);
+        const ink = toRgb(deref(tree, colorway.color));
+        if (!ink) continue;
+        for (const [index, background] of asList(colorway.backgrounds).entries()) {
+          const ground = toRgb(deref(tree, background));
+          if (!ground) continue;
+          const ratio = contrastRatio(ink, ground);
+          if (ratio < MIN_LOGO_CONTRAST) {
+            report('contrast-ratio', `${where}.backgrounds[${index}]`, `Logo colour ${colorway.color} on ${background} has a contrast ratio of ${ratio.toFixed(2)}:1, below ${MIN_LOGO_CONTRAST}:1.`);
+          }
         }
       }
     }
@@ -238,15 +253,6 @@ export function lint(markdown, options = {}) {
   }
 
   // Visuals: each one is locatable, captioned and marked do or dont.
-  const localTarget = (value, path, what) => {
-    if (!dir) return;
-    const target = resolve(dir, value);
-    if (value.startsWith('/') || !insideDir(dir, target)) {
-      report('broken-ref', path, `${what} "${value}" is outside the BRAND.md directory.`);
-    } else if (!existsSync(target)) {
-      report('broken-ref', path, `${what} "${value}" does not exist.`);
-    }
-  };
   for (const [index, visual] of asList(tree.visuals).entries()) {
     const path = `visuals[${index}]`;
     if (!isMap(visual)) continue;

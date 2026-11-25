@@ -67,7 +67,7 @@ print:
   <color-name>: <PrintColor>
 
 logo:
-  <variant>: <LogoVariant>
+  <variation>: <LogoVariation>
 
 personality: <Trait[]>
 voice:
@@ -129,14 +129,19 @@ Only `name` is required. Every other key is optional and should be left out, not
 - `delay` (Duration)
 - `timingFunction` (string): a CSS easing function
 
-**LogoVariant.**
+**LogoVariation.** One form of the logo. Its properties are true whatever colour it is drawn in.
 
-- `file` (path): the artwork, relative to the directory containing BRAND.md. It must exist.
-- `color` (token reference): the colour the artwork is drawn in
-- `backgrounds` (token reference[]): the colours this variant may sit on. (Not `on`, which YAML 1.1 parsers read as the boolean `true`.)
+- `use` (string): when this variation is the right one
 - `minSize` (Dimension): the smallest width at which it stays legible
 - `clearSpace` (string): the empty space around it, stated as a relationship ("the height of the letter n on every side"), not a pixel value
-- `animation` (path): the animated version of this variant, if one exists. Same rules as `file`.
+- `animation` (path): the animated version, if one exists. Same rules as a colourway's `file`.
+- `colorways` (map of name to Colorway): the versions of the artwork, one per kind of background. At least one is required.
+
+**Colorway.** One file of a variation, for one kind of background.
+
+- `file` (path): the artwork, relative to the directory containing BRAND.md. Required, and it must exist.
+- `color` (token reference): the colour the artwork is drawn in. For artwork in more than one colour, the one that must stand out from the background.
+- `backgrounds` (token reference[]): the brand colours this colourway may sit on. (Not `on`, which YAML 1.1 parsers read as the boolean `true`.)
 
 **Trait.** An object with three strings:
 
@@ -341,23 +346,49 @@ vocabulary:
 
 The marks that identify the brand and the rules that do not change.
 
+A logo usually exists in several **variations**, and each variation in several **colourways**:
+
+| Variation | What it is |
+|---|---|
+| `full` | The complete logo: mark and wordmark together. Also called the lockup. |
+| `mark` | The symbol alone. |
+| `wordmark` | The name alone, in its own lettering. |
+
+| Colourway | What it is for |
+|---|---|
+| `on-light` | A dark version, for light backgrounds. |
+| `on-dark` | A light version, for dark backgrounds. |
+
+These names are recommended, so that a tool can ask for "the mark, on dark" and find it. Other names are valid: a brand may have a `stacked` variation, an `app-icon`, or a `one-color` colourway for stamps. A brand whose logo is only a wordmark declares only `wordmark`; it does not invent a mark.
+
 ```yaml
 logo:
-  wordmark:
-    file: assets/logo/wordmark.svg
-    color: "{colors.slate}"
-    backgrounds: ["{colors.flour}"]
-    minSize: 96px
-    clearSpace: the height of the letter n on every side
-  wordmark-reversed:
-    file: assets/logo/wordmark-reversed.svg
-    color: "{colors.flour}"
-    backgrounds: ["{colors.slate}", "{colors.crust}"]
-    minSize: 96px
-    clearSpace: the height of the letter n on every side
+  full:
+    use: The default. Anywhere there is room.
+    minSize: 120px
+    clearSpace: the diameter of the mark on every side
+    colorways:
+      on-light:
+        file: assets/logo/full-on-light.svg
+        color: "{colors.abyss}"
+        backgrounds: ["{colors.foam}", "{colors.lure}"]
+      on-dark:
+        file: assets/logo/full-on-dark.svg
+        color: "{colors.foam}"
+        backgrounds: ["{colors.abyss}", "{colors.kelp}"]
+  mark:
+    use: Avatars, favicons, stickers. Never beside the full logo.
+    minSize: 16px
+    colorways:
+      on-light:
+        file: assets/logo/mark-on-light.svg
+        color: "{colors.abyss}"
+        backgrounds: ["{colors.foam}"]
 ```
 
-The prose states which variant is the default, and lists the prohibitions: stretching, recolouring, effects, busy backgrounds.
+The first variation listed is the default, and within a variation the first colourway. `backgrounds` lists brand colours and is what the contrast check uses. Placing the logo over a photograph is a judgement, not a list; state the rule in prose.
+
+The prose says what the mark means, which variation and colourway are the default, and lists the prohibitions: stretching, recolouring, effects, busy backgrounds.
 
 A logo is always placed from its file. An image model must never be asked to draw it; generate the image without the logo and place the file afterwards.
 
@@ -446,7 +477,7 @@ Never: stock smiles, rustic twine, overhead flat-lays.
 
 How the brand moves when it appears in video, on a screen in a venue, or as an animated logo. This is the brand's character in motion, the part that should survive a redesign: whether things glide or snap, how many things move at once, what never moves.
 
-The prose states the character with a reference, what moves, and what does not. Where the logo has an animated version, it is declared on the logo variant with `animation` and its use is described here.
+The prose states the character with a reference, what moves, and what does not. Where the logo has an animated version, it is declared on the logo variation with `animation` and its use is described here.
 
 ```yaml
 motion:
@@ -472,7 +503,7 @@ a time. Nothing bounces, nothing loops, nothing flashes.
 
 Also known as "Channels".
 
-How the brand shows up in the places it appears most. Prose only, one `###` heading per channel: social, email, advertising, decks, print, packaging. Each states what changes there and what does not: length, tone, which logo variant, how much colour.
+How the brand shows up in the places it appears most. Prose only, one `###` heading per channel: social, email, advertising, decks, print, packaging. Each states what changes there and what does not: length, tone, which logo variation, how much colour.
 
 This section is for what the brand does, not for how a platform works. Leave out any channel the brand does not use.
 
@@ -570,14 +601,15 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | `duplicate-key` | error | A top-level key defined in more than one block. |
 | `duplicate-section` | error | A section, or a section and its alias, appearing twice. |
 | `missing-name` | error | The `name` key is absent. |
-| `broken-ref` | error | A `{token}` reference that does not resolve; a logo `file` or `animation` that does not exist; a visual `file` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target or markdown image is a warning. |
+| `broken-ref` | error | A `{token}` reference that does not resolve; a logo colourway `file` or a variation's `animation` that does not exist; a visual `file` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target or markdown image is a warning. |
 | `section-order` | warning | Sections appear out of the order defined above. |
 | `missing-overview` | warning | There is no Overview section. |
 | `design-drift` | warning | A DESIGN.md in or below the BRAND.md directory, whose `brand` key resolves to this file, lacks the value of a `required` colour (compared after converting both to sRGB), or uses a `fontFamily` that `typography` does not list. |
 | `self-violation` | warning | A `vocabulary.avoid` term appears, as a whole word and ignoring case, in a `messaging` value other than `cta.never`. Prose is not checked, because before-and-after pairs and don'ts quote avoided words on purpose. |
-| `contrast-ratio` | warning | A logo variant's `color` against any colour in its `backgrounds` list has a contrast ratio below 3:1. |
+| `contrast-ratio` | warning | A logo colourway's `color` against any colour in its `backgrounds` list has a contrast ratio below 3:1. |
+| `missing-colorway` | warning | A logo variation with no colourway, or a colourway with no `file`. |
 | `unsupported-claim` | warning | A `claims` entry with `status: approved` and no `evidence`. |
-| `unknown-property` | warning | A property this spec does not define on a typeface, logo variant, trait, pillar, claim, print colour, motion token or visual. |
+| `unknown-property` | warning | A property this spec does not define on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token or visual. |
 | `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`; a visual without exactly one of `file` and `url`, with a `url` that is not https, or with a missing or unknown `verdict` or `shows`. |
 | `missing-caption` | warning | A visual with no `caption`. |
 | `unverified-url` | info | A visual given by `url`. It is not fetched. |
@@ -588,7 +620,9 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 
 **Typography roles:** `display`, `text`, `mono`
 
-**Logo variants:** `wordmark`, `mark`, `lockup`, and each with a `-reversed` suffix for use on dark backgrounds
+**Logo variations:** `full`, `mark`, `wordmark`
+
+**Logo colourways:** `on-light`, `on-dark`
 
 **Colours:** any name that says what the colour is or means. Avoid `primary`, `secondary`, `accent`.
 
@@ -599,8 +633,8 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | Unknown section heading | Preserve; do not error |
 | Unknown top-level YAML key | Preserve; do not error |
 | Unknown colour or typography name | Accept if the value is valid |
-| Unknown logo variant name | Accept |
-| Unknown property on a typeface, logo variant, trait, pillar, claim, print colour or motion token | Accept with a warning |
+| Unknown logo variation or colourway name | Accept |
+| Unknown property on a typeface, logo variation, logo colourway, trait, pillar, claim, print colour, motion token or visual | Accept with a warning |
 | Unknown `status` on a claim | Treat as `review` |
 | External `@` reference | Preserve; resolve on demand |
 | Fragment on an unsupported file type | Ignore the fragment; use the whole file |

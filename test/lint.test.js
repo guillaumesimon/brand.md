@@ -99,7 +99,7 @@ test('broken-ref: references inside code spans are literal', () => {
 });
 
 test('broken-ref: a missing logo file is an error; a present one is not', () => {
-  const doc = withYaml('logo:\n  wordmark:\n    file: assets/wordmark.svg');
+  const doc = withYaml('logo:\n  wordmark:\n    colorways:\n      on-light:\n        file: assets/wordmark.svg');
   const missing = project({ 'BRAND.md': doc });
   const present = project({ 'BRAND.md': doc, 'assets/wordmark.svg': '<svg/>' });
   assert.deepEqual(rulesOf(lint(doc, { file: join(missing, 'BRAND.md') })), ['broken-ref']);
@@ -107,7 +107,7 @@ test('broken-ref: a missing logo file is an error; a present one is not', () => 
 });
 
 test('broken-ref: a logo file outside the directory is an error', () => {
-  const doc = withYaml('logo:\n  wordmark:\n    file: ../elsewhere.svg');
+  const doc = withYaml('logo:\n  wordmark:\n    colorways:\n      on-light:\n        file: ../elsewhere.svg');
   const dir = project({ 'brand/BRAND.md': doc, 'elsewhere.svg': '<svg/>' });
   const report = lint(doc, { file: join(dir, 'brand/BRAND.md') });
   assert.match(find(report, 'broken-ref')[0].message, /outside/);
@@ -121,20 +121,20 @@ test('broken-ref: @ references — out of bounds is an error, missing is a warni
 });
 
 test('contrast-ratio: a logo must reach 3:1 on each permitted background', () => {
-  const doc = withYaml('colors:\n  ink: "#111111"\n  paper: "#FFFFFF"\n  fog: "#EEEEEE"\nlogo:\n  wordmark:\n    color: "{colors.paper}"\n    backgrounds: ["{colors.ink}", "{colors.fog}"]');
+  const doc = withYaml('colors:\n  ink: "#111111"\n  paper: "#FFFFFF"\n  fog: "#EEEEEE"\nlogo:\n  wordmark:\n    colorways:\n      on-dark:\n        file: w.svg\n        color: "{colors.paper}"\n        backgrounds: ["{colors.ink}", "{colors.fog}"]');
   const found = find(lint(doc), 'contrast-ratio');
   assert.equal(found.length, 1);
-  assert.equal(found[0].path, 'logo.wordmark.backgrounds[1]');
+  assert.equal(found[0].path, 'logo.wordmark.colorways.on-dark.backgrounds[1]');
 });
 
 test('contrast-ratio: colours the linter cannot convert are skipped, not misreported', () => {
-  const doc = withYaml('colors:\n  ink: "oklch(20% 0.02 250)"\n  paper: "#FFFFFF"\nlogo:\n  wordmark:\n    color: "{colors.paper}"\n    backgrounds: ["{colors.ink}"]');
+  const doc = withYaml('colors:\n  ink: "oklch(20% 0.02 250)"\n  paper: "#FFFFFF"\nlogo:\n  wordmark:\n    colorways:\n      on-dark:\n        file: w.svg\n        color: "{colors.paper}"\n        backgrounds: ["{colors.ink}"]');
   assert.deepEqual(lint(doc).findings, []);
 });
 
 test('unknown-property: the YAML 1.1 trap `on` is caught', () => {
-  const doc = withYaml('logo:\n  wordmark:\n    on: ["#000000"]');
-  assert.equal(find(lint(doc), 'unknown-property')[0].path, 'logo.wordmark.on');
+  const doc = withYaml('logo:\n  wordmark:\n    colorways:\n      on-light:\n        file: w.svg\n        on: ["#000000"]');
+  assert.equal(find(lint(doc), 'unknown-property')[0].path, 'logo.wordmark.colorways.on-light.on');
 });
 
 test('unverified-license: only an explicit true counts as verified', () => {
@@ -227,8 +227,29 @@ test('motion: the section sits between Imagery and Applications', () => {
   assert.deepEqual(rulesOf(lint(`${VALID}\n## Applications\n\nText.\n\n## Motion\n\nText.\n`)), ['section-order']);
 });
 
+test('missing-colorway: a variation needs a colourway, and a colourway needs a file', () => {
+  const doc = withYaml('logo:\n  mark:\n    use: Avatars.\n    file: old-shape.svg\n  wordmark:\n    colorways:\n      on-light:\n        color: "#000000"');
+  const report = lint(doc);
+  assert.deepEqual(find(report, 'missing-colorway').map((f) => f.path), ['logo.mark', 'logo.wordmark.colorways.on-light']);
+  assert.deepEqual(find(report, 'unknown-property').map((f) => f.path), ['logo.mark.file']);
+});
+
+test('logo: several variations, each with on-light and on-dark colourways, lint clean', () => {
+  const doc = withYaml([
+    'colors:', '  ink: "#111111"', '  paper: "#FFFFFF"',
+    'logo:',
+    '  full:', '    use: The default.', '    minSize: 96px', '    clearSpace: one x on every side', '    colorways:',
+    '      on-light: { file: full-ink.svg, color: "{colors.ink}", backgrounds: ["{colors.paper}"] }',
+    '      on-dark: { file: full-paper.svg, color: "{colors.paper}", backgrounds: ["{colors.ink}"] }',
+    '  mark:', '    use: Avatars.', '    colorways:',
+    '      on-light: { file: mark-ink.svg, color: "{colors.ink}", backgrounds: ["{colors.paper}"] }',
+  ].join('\n'));
+  const dir = project({ 'BRAND.md': doc, 'full-ink.svg': '<svg/>', 'full-paper.svg': '<svg/>', 'mark-ink.svg': '<svg/>' });
+  assert.deepEqual(lint(doc, { file: join(dir, 'BRAND.md') }).findings, []);
+});
+
 test('logo animation: checked like the logo file', () => {
-  const doc = withYaml('logo:\n  wordmark:\n    file: assets/wordmark.svg\n    animation: assets/wordmark.mov');
+  const doc = withYaml('logo:\n  wordmark:\n    animation: assets/wordmark.mov\n    colorways:\n      on-light:\n        file: assets/wordmark.svg');
   const dir = project({ 'BRAND.md': doc, 'assets/wordmark.svg': '<svg/>' });
   assert.deepEqual(find(lint(doc, { file: join(dir, 'BRAND.md') }), 'broken-ref').map((f) => f.path), ['logo.wordmark.animation']);
 });

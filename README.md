@@ -114,7 +114,7 @@ Sections use `##` headings. Only Overview is required. Those present appear in t
 | 6 | Messaging | `messaging` | Tagline, one-liner, boilerplate, pillars with proof, calls to action |
 | 7 | Claims | `claims` | What may be asserted, with evidence and status |
 | 8 | Vocabulary | `vocabulary` | Words to use, words to avoid and their replacements |
-| 9 | Logo | `logo` | Variants, files, clear space, permitted backgrounds |
+| 9 | Logo | `logo` | Variations (full, mark, wordmark), colourways (on light, on dark), clear space |
 | 10 | Colors | `colors`, `required`, `print` | Identity colours, named by meaning and described in words, with print values |
 | 11 | Typography | `typography` | Typefaces, fallbacks, licences |
 | 12 | Imagery | | Photography, illustration, icons, generation recipes |
@@ -138,7 +138,12 @@ required: <token reference[]>
 print:
   <color-name>: { cmyk, pantone, note }
 logo:
-  <variant>: { file, color, backgrounds, minSize, clearSpace, animation }
+  <variation>:                # full, mark, wordmark
+    use: <string>
+    minSize: <Dimension>
+    clearSpace: <string>
+    colorways:
+      <name>: { file, color, backgrounds }   # on-light, on-dark
 personality:
   - { is, not, means }
 voice: { person, casing, sentenceLength }
@@ -194,6 +199,7 @@ The spec defines the rules so any tool behaves the same way; the linter in this 
 | `design-drift` | warning | A linked DESIGN.md lacks a required colour's value or uses an unlisted font family |
 | `self-violation` | warning | An avoided word appears in the brand's own messaging |
 | `contrast-ratio` | warning | A logo against a permitted background falls below 3:1 |
+| `missing-colorway` | warning | A logo variation with no colourway, or a colourway with no file |
 | `unsupported-claim` | warning | An approved claim with no evidence |
 | `unknown-property` | warning | A property the spec does not define |
 | `invalid-value` | warning | A malformed CMYK value, motion duration or visual entry |

@@ -137,20 +137,21 @@ vocabulary:
 ```yaml
 logo:
   wordmark:
-    file: assets/logo/wordmark.svg
-    color: "{colors.slate}"
-    backgrounds: ["{colors.flour}"]
+    use: The only logo. Signage, bags, the foot of a post.
     minSize: 96px
     clearSpace: the height of the letter n on every side
-  wordmark-reversed:
-    file: assets/logo/wordmark-reversed.svg
-    color: "{colors.flour}"
-    backgrounds: ["{colors.slate}", "{colors.crust}"]
-    minSize: 96px
-    clearSpace: the height of the letter n on every side
+    colorways:
+      on-light:
+        file: assets/logo/wordmark-on-light.svg
+        color: "{colors.slate}"
+        backgrounds: ["{colors.flour}"]
+      on-dark:
+        file: assets/logo/wordmark-on-dark.svg
+        color: "{colors.flour}"
+        backgrounds: ["{colors.slate}", "{colors.crust}"]
 ```
 
-The wordmark in Slate on Flour is the default. There is no symbol and no monogram.
+Panier Gris has a wordmark and nothing else: no symbol, no monogram, so no `mark` and no `full`. On-light (Slate on Flour) is the default.
 
 Never stretch it, recolour it, outline it, set it on a curve or add a wheat sheaf. Never ask an image model to draw it: generate the image without it and place the file.
 

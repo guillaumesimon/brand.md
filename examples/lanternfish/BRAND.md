@@ -140,23 +140,50 @@ vocabulary:
 
 ```yaml
 logo:
+  full:
+    use: The default. Site header, decks, documents, anywhere there is room.
+    minSize: 120px
+    clearSpace: the diameter of the mark on every side
+    colorways:
+      on-dark:
+        file: assets/logo/full-on-dark.svg
+        color: "{colors.foam}"
+        backgrounds: ["{colors.abyss}", "{colors.kelp}"]
+      on-light:
+        file: assets/logo/full-on-light.svg
+        color: "{colors.abyss}"
+        backgrounds: ["{colors.foam}", "{colors.lure}"]
+  mark:
+    use: Avatars, favicons, app icon, stickers. Never beside the full logo.
+    minSize: 16px
+    clearSpace: half its diameter on every side
+    colorways:
+      on-dark:
+        file: assets/logo/mark-on-dark.svg
+        color: "{colors.foam}"
+        backgrounds: ["{colors.abyss}", "{colors.kelp}"]
+      on-light:
+        file: assets/logo/mark-on-light.svg
+        color: "{colors.abyss}"
+        backgrounds: ["{colors.foam}", "{colors.lure}"]
   wordmark:
-    file: assets/logo/wordmark.svg
-    color: "{colors.abyss}"
-    backgrounds: ["{colors.foam}", "{colors.lure}"]
+    use: Where the mark already appears nearby, such as an email footer under an avatar.
     minSize: 88px
     clearSpace: the height of the letter l on every side
-  wordmark-reversed:
-    file: assets/logo/wordmark-reversed.svg
-    color: "{colors.foam}"
-    backgrounds: ["{colors.abyss}", "{colors.kelp}"]
-    minSize: 88px
-    clearSpace: the height of the letter l on every side
+    colorways:
+      on-dark:
+        file: assets/logo/wordmark-on-dark.svg
+        color: "{colors.foam}"
+        backgrounds: ["{colors.abyss}", "{colors.kelp}"]
+      on-light:
+        file: assets/logo/wordmark-on-light.svg
+        color: "{colors.abyss}"
+        backgrounds: ["{colors.foam}", "{colors.lure}"]
 ```
 
-The reversed wordmark on Abyss is the default; the brand lives in the dark. The wordmark is always lowercase.
+The mark is a ring with a point of light at its centre: the watch, and the one who has it. The full logo on Abyss is the default; the brand lives in the dark. The wordmark is always lowercase.
 
-Never set the wordmark in Lure. Never add a fish. Never place it on a photograph or a gradient. Never ask an image model to draw it: generate the image without it and place the file.
+Every colourway is a single colour. Never set any part of the logo in Lure, and never colour the centre point differently from the ring. Never add a fish. Never place the logo on a photograph or a gradient. Never ask an image model to draw it: generate the image without it and place the file.
 
 ## Colors
 
@@ -261,7 +288,7 @@ Lanternfish moves like something seen through deep water: slowly, one thing at a
 - **Settle** ({motion.settle.duration}) is how anything arrives: it eases in and stops. Nothing bounces or overshoots.
 - **Pulse** ({motion.pulse.duration}) belongs to the Lure dot alone. It brightens and dims once to show who has the watch, then rests.
 - One element moves at a time. Text never animates letter by letter.
-- The wordmark has no animated version and is never animated. Exception: none.
+- The logo has no animated version and is never animated. Exception: none.
 
 Never: flashing, shaking, sirens, countdowns, looping backgrounds. Exception: a product recording that shows a firing page as it really behaves.
 
