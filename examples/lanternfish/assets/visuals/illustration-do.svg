@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Do: flat shapes with one amber point">
+  <rect width="640" height="360" fill="#0B1F2A"/>
+  <rect x="80" y="110" width="110" height="140" rx="8" fill="#2F6F62"/>
+  <rect x="210" y="110" width="110" height="140" rx="8" fill="#2F6F62" opacity="0.6"/>
+  <rect x="340" y="110" width="110" height="140" rx="8" fill="#F3F1EA" opacity="0.18"/>
+  <rect x="470" y="110" width="110" height="140" rx="8" fill="#F3F1EA" opacity="0.18"/>
+  <circle cx="265" cy="180" r="12" fill="#F2B33D"/>
+</svg>

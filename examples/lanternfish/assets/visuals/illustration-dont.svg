@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Don't: several amber elements, a fish and an alarm colour">
+  <rect width="640" height="360" fill="#0B1F2A"/>
+  <ellipse cx="300" cy="180" rx="150" ry="70" fill="#F2B33D"/>
+  <polygon points="450,180 540,120 540,240" fill="#F2B33D"/>
+  <circle cx="210" cy="160" r="12" fill="#0B1F2A"/>
+  <circle cx="120" cy="70" r="26" fill="#E5484D"/>
+  <path d="M40 300 Q120 260 200 300 T360 300 T520 300 T680 300" stroke="#F2B33D" stroke-width="8" fill="none"/>
+</svg>

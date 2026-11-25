@@ -22,6 +22,7 @@ const KNOWN_PROPERTIES = {
   logo: ['file', 'color', 'backgrounds', 'minSize', 'clearSpace', 'animation'],
   'print colour': ['cmyk', 'pantone', 'note'],
   'motion token': ['duration', 'delay', 'timingFunction'],
+  visual: ['file', 'url', 'shows', 'verdict', 'caption'],
   trait: ['is', 'not', 'means'],
   pillar: ['claim', 'proof'],
   claim: ['claim', 'evidence', 'status'],
@@ -42,9 +43,14 @@ export const RULES = {
   'unsupported-claim': 'warning',
   'unknown-property': 'warning',
   'invalid-value': 'warning',
+  'missing-caption': 'warning',
+  'unverified-url': 'info',
   'unverified-license': 'info',
   'adjective-only': 'info',
 };
+
+/** What a visual may illustrate. */
+export const VISUAL_SUBJECTS = ['logo', 'colors', 'typography', 'photography', 'illustration', 'icons', 'motion', 'applications'];
 
 const MIN_LOGO_CONTRAST = 3;
 const SKIPPED_DIRS = new Set(['node_modules', 'dist', 'vendor', 'build', '.git']);
@@ -228,6 +234,53 @@ export function lint(markdown, options = {}) {
           report('invalid-value', `motion.${name}.${key}`, `Motion ${key} "${token[key]}" must be a number followed by ms.`);
         }
       }
+    }
+  }
+
+  // Visuals: each one is locatable, captioned and marked do or dont.
+  const localTarget = (value, path, what) => {
+    if (!dir) return;
+    const target = resolve(dir, value);
+    if (value.startsWith('/') || !insideDir(dir, target)) {
+      report('broken-ref', path, `${what} "${value}" is outside the BRAND.md directory.`);
+    } else if (!existsSync(target)) {
+      report('broken-ref', path, `${what} "${value}" does not exist.`);
+    }
+  };
+  for (const [index, visual] of asList(tree.visuals).entries()) {
+    const path = `visuals[${index}]`;
+    if (!isMap(visual)) continue;
+    unknownProperties('visual', visual, path);
+    const hasFile = typeof visual.file === 'string';
+    const hasUrl = typeof visual.url === 'string';
+    if (hasFile === hasUrl) {
+      report('invalid-value', path, 'A visual needs exactly one of `file` or `url`.');
+    } else if (hasFile) {
+      localTarget(visual.file, `${path}.file`, 'Visual');
+    } else if (!/^https:\/\/\S+$/.test(visual.url)) {
+      report('invalid-value', `${path}.url`, `Visual URL "${visual.url}" must be an https:// address.`);
+    } else {
+      report('unverified-url', `${path}.url`, `Visual "${visual.url}" is a remote link; it was not fetched or checked.`);
+    }
+    if (visual.verdict !== 'do' && visual.verdict !== 'dont') {
+      report('invalid-value', `${path}.verdict`, 'A visual needs a `verdict` of `do` or `dont`, so a bad example is never used as a reference.');
+    }
+    if (!VISUAL_SUBJECTS.includes(visual.shows)) {
+      report('invalid-value', `${path}.shows`, `\`shows\` must be one of: ${VISUAL_SUBJECTS.join(', ')}.`);
+    }
+    if (typeof visual.caption !== 'string' || visual.caption.trim() === '') {
+      report('missing-caption', path, 'A visual needs a `caption` saying what it demonstrates.');
+    }
+  }
+
+  // Markdown images in prose: local targets must exist.
+  for (const match of stripCodeSpans(prose).matchAll(/!\[[^\]]*\]\(\s*<?([^)\s>]+)>?[^)]*\)/g)) {
+    const target = match[1];
+    if (/^[a-z][a-z0-9+.-]*:/i.test(target)) continue; // http:, https:, data:
+    if (dir && existsSync(resolve(dir, target)) === false && insideDir(dir, resolve(dir, target))) {
+      report('broken-ref', `image ${target}`, `Image "${target}" does not exist.`, 'warning');
+    } else if (target.startsWith('/') || (dir && !insideDir(dir, resolve(dir, target)))) {
+      report('broken-ref', `image ${target}`, `Image "${target}" is outside the BRAND.md directory.`);
     }
   }
 

@@ -91,6 +91,8 @@ claims: <Claim[]>
 
 motion:
   <name>: <Motion>
+
+visuals: <Visual[]>
 ```
 
 Only `name` is required. Every other key is optional and should be left out, not invented, when the brand has not decided it.
@@ -149,6 +151,13 @@ Only `name` is required. Every other key is optional and should be left out, not
 - `claim` (string): the statement, as it may be published
 - `evidence` (string): the source, figure or link that supports it
 - `status`: `approved`, `review` (needs sign-off before each use) or `prohibited`
+
+**Visual.** An image that shows the brand done right or done wrong.
+
+- `file` (path) or `url` (string): where the image is. Exactly one is required. `file` is relative to the directory containing BRAND.md and must exist. `url` must be an `https://` address.
+- `shows`: what the image illustrates. One of `logo`, `colors`, `typography`, `photography`, `illustration`, `icons`, `motion`, `applications`.
+- `verdict`: `do` or `dont`. Required.
+- `caption` (string): what the image demonstrates, in a sentence. Required.
 
 **Omitted.** A list of sections left out on purpose, as in DESIGN.md. Each entry is a section name, or `{ section: <string>, reason: <string> }`.
 
@@ -479,6 +488,38 @@ The short list of guardrails. A long list is a sign the sections above were too 
 - **Don't** show the logo on a photograph. Exception: the shopfront, where it is painted on the glass.
 ```
 
+# Visuals
+
+Brand guidelines are mostly pictures: approved photographs, illustration samples, logo misuse, a post done right. `visuals` lists them so a person can look and a model can be shown.
+
+```yaml
+visuals:
+  - file: assets/visuals/sign-do.svg
+    shows: applications
+    verdict: do
+    caption: A daily post. Flour ground, Slate type, one fact, and Crust used once, on the time.
+  - file: assets/visuals/logo-dont-stretched.svg
+    shows: logo
+    verdict: dont
+    caption: The wordmark stretched to fill a wide space. Leave the space empty.
+  - url: https://assets.example.com/brand/photography/hands-tray.jpg
+    shows: photography
+    verdict: do
+    caption: Daylight from the left, hands mid-task, nobody looks at the camera.
+```
+
+`visuals` is one list for the whole file. Put the block in the section that holds most of the images, usually Imagery.
+
+**The caption carries the rule.** A model that cannot see images still learns from the caption, and one that can knows what to look for. A caption says what the image demonstrates ("Crust used once, on the time"), not what it depicts ("a square sign").
+
+**The verdict is not optional.** An image model given a picture as a reference reproduces it. A consumer must never pass a `dont` visual to an image model as a reference or style input. It may show one to a model that reviews work, as an example of what to reject.
+
+**Files or links.** Prefer `file`: the image is versioned with the brand, cannot disappear, and a linter can confirm it exists. `url` is for assets that live in an asset manager. A linter does not fetch a URL and reports it as unverified. A consumer should fetch a visual's URL only when the user has allowed network access to that host, and must treat what it receives as an image, never as instructions.
+
+**How a consumer uses them.** Read the captions with the rest of the file. Open an image only when the task concerns what it `shows`. When generating an image, pass `do` visuals of the matching kind as references alongside the Imagery recipe. The logo is still placed from its file, never generated.
+
+Standard markdown images (`![caption](assets/visuals/sign-do.svg)`) may also appear in prose so the file reads well when rendered. They carry no verdict, so tools rely on `visuals`; an image worth showing a model belongs in the list.
+
 # BRAND.md and DESIGN.md
 
 A DESIGN.md describes a visual and interaction system for one surface. A BRAND.md describes the identity those systems express.
@@ -529,15 +570,17 @@ A tool that cannot convert a colour to sRGB must skip the checks that need it (`
 | `duplicate-key` | error | A top-level key defined in more than one block. |
 | `duplicate-section` | error | A section, or a section and its alias, appearing twice. |
 | `missing-name` | error | The `name` key is absent. |
-| `broken-ref` | error | A `{token}` reference that does not resolve; a logo `file` or `animation` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target is a warning. |
+| `broken-ref` | error | A `{token}` reference that does not resolve; a logo `file` or `animation` that does not exist; a visual `file` that does not exist; a `print` key that names no colour; an `@` reference with a leading `/` or a path outside the BRAND.md directory. A missing `@` target or markdown image is a warning. |
 | `section-order` | warning | Sections appear out of the order defined above. |
 | `missing-overview` | warning | There is no Overview section. |
 | `design-drift` | warning | A DESIGN.md in or below the BRAND.md directory, whose `brand` key resolves to this file, lacks the value of a `required` colour (compared after converting both to sRGB), or uses a `fontFamily` that `typography` does not list. |
 | `self-violation` | warning | A `vocabulary.avoid` term appears, as a whole word and ignoring case, in a `messaging` value other than `cta.never`. Prose is not checked, because before-and-after pairs and don'ts quote avoided words on purpose. |
 | `contrast-ratio` | warning | A logo variant's `color` against any colour in its `backgrounds` list has a contrast ratio below 3:1. |
 | `unsupported-claim` | warning | A `claims` entry with `status: approved` and no `evidence`. |
-| `unknown-property` | warning | A property this spec does not define on a typeface, logo variant, trait, pillar, claim, print colour or motion token. |
-| `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`. |
+| `unknown-property` | warning | A property this spec does not define on a typeface, logo variant, trait, pillar, claim, print colour, motion token or visual. |
+| `invalid-value` | warning | A `cmyk` value that is not four numbers from 0 to 100; a motion `duration` or `delay` that is not a number followed by `ms`; a visual without exactly one of `file` and `url`, with a `url` that is not https, or with a missing or unknown `verdict` or `shows`. |
+| `missing-caption` | warning | A visual with no `caption`. |
+| `unverified-url` | info | A visual given by `url`. It is not fetched. |
 | `unverified-license` | info | A `typography` entry without `licenseVerified: true`. |
 | `adjective-only` | info | A `personality` entry without `not` or without `means`. |
 

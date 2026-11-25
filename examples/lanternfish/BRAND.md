@@ -226,6 +226,22 @@ Flat shapes in Abyss, Foam and Kelp with one Lure point, always a single dot or 
 
 Charts are the brand's most common image. One series in Lure, everything else in Foam at reduced strength. Label lines directly; no legends.
 
+```yaml
+visuals:
+  - file: assets/visuals/illustration-do.svg
+    shows: illustration
+    verdict: do
+    caption: A rota as flat blocks in Kelp and Foam on Abyss, with a single Lure dot marking who has the watch.
+  - file: assets/visuals/illustration-dont.svg
+    shows: illustration
+    verdict: dont
+    caption: A fish, waves, several Lure elements and a red alarm dot. The brand has one light and no creatures.
+  - file: assets/visuals/chart-do.svg
+    shows: illustration
+    verdict: do
+    caption: A bar chart with one series in Lure, the rest in faded Foam, the value labelled on the bar and no legend.
+```
+
 ## Motion
 
 ```yaml

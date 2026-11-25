@@ -155,9 +155,19 @@ claims:
   - { claim, evidence, status: approved | review | prohibited }
 motion:
   <name>: { duration, delay, timingFunction }
+visuals:
+  - { file | url, shows, verdict: do | dont, caption }
 ```
 
 Token references (`{colors.crust}`) and external references (`` `@guides/photography.md` ``) work as they do in DESIGN.md.
+
+### Visuals
+
+`visuals` lists the images that show the brand done right or wrong: approved photographs, illustration samples, logo misuse. Each has a local `file` or an https `url`, what it `shows`, a `verdict` and a `caption`.
+
+- The caption states the rule, so a model that cannot see images still learns it.
+- A `dont` image is never given to an image model as a reference.
+- Local files are checked by the linter. URLs are accepted, reported as unverified and never fetched.
 
 ### BRAND.md and DESIGN.md
 
@@ -186,7 +196,9 @@ The spec defines the rules so any tool behaves the same way; the linter in this 
 | `contrast-ratio` | warning | A logo against a permitted background falls below 3:1 |
 | `unsupported-claim` | warning | An approved claim with no evidence |
 | `unknown-property` | warning | A property the spec does not define |
-| `invalid-value` | warning | A malformed CMYK value or motion duration |
+| `invalid-value` | warning | A malformed CMYK value, motion duration or visual entry |
+| `missing-caption` | warning | A visual with no caption |
+| `unverified-url` | info | A visual given by URL, which is not fetched |
 | `unverified-license` | info | A typeface whose licence is not verified |
 | `adjective-only` | info | A personality trait with no `not` or `means` |
 

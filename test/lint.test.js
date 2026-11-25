@@ -233,6 +233,38 @@ test('logo animation: checked like the logo file', () => {
   assert.deepEqual(find(lint(doc, { file: join(dir, 'BRAND.md') }), 'broken-ref').map((f) => f.path), ['logo.wordmark.animation']);
 });
 
+test('visuals: local files, captions, verdicts and subjects are checked', () => {
+  const doc = withYaml([
+    'visuals:',
+    '  - { file: assets/ok.svg, shows: logo, verdict: do, caption: Correct clear space. }',
+    '  - { file: assets/gone.svg, shows: logo, verdict: dont, caption: Stretched. }',
+    '  - { file: ../outside.svg, shows: logo, verdict: dont, caption: Elsewhere. }',
+    '  - { file: assets/ok.svg, shows: mood, verdict: maybe }',
+    '  - { shows: logo, verdict: do, caption: No location. }',
+    '  - { file: assets/ok.svg, url: "https://example.com/a.png", shows: logo, verdict: do, caption: Two locations. }',
+  ].join('\n'));
+  const dir = project({ 'brand/BRAND.md': doc, 'brand/assets/ok.svg': '<svg/>', 'outside.svg': '<svg/>' });
+  const report = lint(doc, { file: join(dir, 'brand/BRAND.md') });
+  assert.deepEqual(find(report, 'broken-ref').map((f) => f.path), ['visuals[1].file', 'visuals[2].file']);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['visuals[3].verdict', 'visuals[3].shows', 'visuals[4]', 'visuals[5]']);
+  assert.deepEqual(find(report, 'missing-caption').map((f) => f.path), ['visuals[3]']);
+});
+
+test('visuals: https URLs are accepted, flagged as unverified and never fetched', () => {
+  const doc = withYaml('visuals:\n  - { url: "https://assets.example.com/a.jpg", shows: photography, verdict: do, caption: Window light. }\n  - { url: "http://assets.example.com/b.jpg", shows: photography, verdict: do, caption: Insecure. }\n  - { url: "file:///etc/passwd", shows: photography, verdict: do, caption: Not a web address. }');
+  const report = lint(doc);
+  assert.deepEqual(find(report, 'unverified-url').map((f) => [f.path, f.severity]), [['visuals[0].url', 'info']]);
+  assert.deepEqual(find(report, 'invalid-value').map((f) => f.path), ['visuals[1].url', 'visuals[2].url']);
+  assert.equal(report.summary.errors, 0);
+});
+
+test('markdown images in prose: a missing local file is a warning, remote ones are ignored', () => {
+  const doc = `${VALID}\n![Good](assets/ok.svg)\n![Gone](assets/gone.svg "title")\n![Remote](https://example.com/x.png)\nIn code: \`![x](assets/nope.svg)\`\n`;
+  const dir = project({ 'BRAND.md': doc, 'assets/ok.svg': '<svg/>' });
+  const found = lint(doc, { file: join(dir, 'BRAND.md') }).findings;
+  assert.deepEqual(found.map((f) => [f.rule, f.severity, f.path]), [['broken-ref', 'warning', 'image assets/gone.svg']]);
+});
+
 test('colour helpers', () => {
   assert.deepEqual(toRgb('#fff'), [255, 255, 255]);
   assert.deepEqual(toRgb('#0B1F2AFF'), [11, 31, 42]);

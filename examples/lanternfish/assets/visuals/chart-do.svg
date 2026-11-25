@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Do: a chart with one highlighted series, labelled directly">
+  <rect width="640" height="360" fill="#0B1F2A"/>
+  <g fill="#F3F1EA" opacity="0.3"><rect x="90" y="220" width="70" height="80"/><rect x="190" y="200" width="70" height="100"/><rect x="390" y="230" width="70" height="70"/><rect x="490" y="210" width="70" height="90"/></g>
+  <rect x="290" y="80" width="70" height="220" fill="#F2B33D"/>
+  <text x="325" y="66" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="18" fill="#F2B33D">14 nights</text>
+  <text x="90" y="328" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#F3F1EA">Night pages per person, Q3</text>
+</svg>

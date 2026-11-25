@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-label="Do: a daily post">
+  <rect width="480" height="480" fill="#F6F1E7"/>
+  <text x="40" y="200" font-family="Fraunces, Georgia, serif" font-size="56" font-weight="600" fill="#3A3D40">Sourdough,</text>
+  <text x="40" y="268" font-family="Fraunces, Georgia, serif" font-size="56" font-weight="600" fill="#3A3D40">out at <tspan fill="#8A4B1F">7:30</tspan></text>
+  <text x="40" y="430" font-family="Karla, system-ui, sans-serif" font-size="20" fill="#3A3D40">Panier Gris, rue des Halles</text>
+</svg>

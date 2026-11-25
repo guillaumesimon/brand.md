@@ -215,6 +215,24 @@ Recipe: "natural window light, 35mm, shallow depth of field, flour dust visible 
 
 Never: stock smiles, rustic twine, slate serving boards, overhead flat-lays, steam added in editing.
 
+```yaml
+visuals:
+  - file: assets/visuals/sign-do.svg
+    shows: applications
+    verdict: do
+    caption: A daily post. Flour ground, Slate type, one fact, and Crust used once, on the time.
+  - file: assets/visuals/sign-dont.svg
+    shows: applications
+    verdict: dont
+    caption: Everything wrong at once. Crust as a background, Butter for text, italics, all caps, an exclamation mark, avoided words and a "Shop now" button.
+  - file: assets/visuals/logo-dont-stretched.svg
+    shows: logo
+    verdict: dont
+    caption: The wordmark stretched to fill a wide space. Leave the space empty.
+```
+
+No approved photographs are on file yet; until there are, the recipe above is the only reference for photography.
+
 ### Illustration
 
 None. Where a drawing seems needed, use a photograph or a sentence.
