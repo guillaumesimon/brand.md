@@ -1,10 +1,47 @@
-# BRAND.md
+<p align="center">
+  <img src="assets/brand-md-logo.png" alt="brand.md" width="600">
+</p>
 
-A format specification for describing a brand to people and AI agents. BRAND.md gives anyone making a landing page, an ad, an email, a deck or an image a persistent, structured understanding of who the brand is and how it shows up.
+<h3 align="center">Brand guidelines your AI tools can actually follow.</h3>
 
-It is a sibling of Google's [DESIGN.md](https://github.com/google-labs-code/design.md) and uses the same grammar. DESIGN.md describes a visual system for one surface. BRAND.md describes the identity those systems express, and works on its own when there is no design system at all.
+<p align="center">One plain-text file. People read it, agents follow it, a linter checks it.</p>
 
-Status: `alpha`. The format will change.
+---
+
+Your team already uses AI to write landing pages, ads, emails, decks and social posts, and to make images. It is fast, and it is off-brand: the yellow is slightly wrong, the logo gets stretched or redrawn, the copy says "unlock the power of seamless", and nobody approved the claim in the third paragraph.
+
+The brand guidelines exist. They are a 40-page PDF or a brand portal, written for designers. An agent cannot read them, so every prompt starts from zero, or from someone pasting "be friendly and professional".
+
+**BRAND.md puts the brand where agents already look: a file in the project.** It records who the brand is for, how it sounds, what it may claim, and how its logo, colours, typefaces and images are used. Prose carries the judgement; structured values carry what a tool can check.
+
+## What it fixes
+
+| What goes wrong today | What BRAND.md gives the agent |
+|:--|:--|
+| "Write in a friendly tone" produces generic copy | Traits with their limits, and before-and-after rewrites it can imitate |
+| The brand's own copy uses the words it bans | A list of words to avoid, with what to write instead. The linter catches the brand breaking its own rule |
+| An agent invents "trusted by 10,000 teams" | A list of claims, each approved, under review or prohibited, with its evidence |
+| The logo is redrawn by an image model, or stretched to fit | Every logo variation and colourway as a file to place, with misuse examples marked "don't" |
+| A hex value means nothing to an image model, and the printer guesses CMYK | Each colour as a screen value, a print value and a description in words |
+| Forty rules that every agent must read | Rules sit in the section they govern: an agent writing an email pulls voice rules, one making a photo pulls photography rules |
+| The product's design system drifts from the brand | Works beside [DESIGN.md](https://github.com/google-labs-code/design.md), and the linter flags a design that drops a required brand colour |
+
+## Who it is for
+
+- **Marketing teams** briefing agents for ads, emails, landing pages and social posts.
+- **Founders** writing down a brand before there is a designer, so the first hundred pieces of content agree with each other.
+- **Agencies** handing a client a brand that their tools can use on day one, not a PDF.
+- **Design teams** keeping one brand upstream of several design systems: the product, the marketing site, the decks.
+
+## How it works
+
+1. **Write `BRAND.md`** at the root of the project. Only a name and an overview are required; add sections as the brand is decided. See the [examples](#examples), including a [real brand](examples/bolt/BRAND.md).
+2. **Point your agent at it.** One line in `CLAUDE.md` or `AGENTS.md`: read BRAND.md before writing public copy or making a marketing asset. [Details](#using-it-with-an-agent).
+3. **Lint it** like code. Broken references, missing logo files, unreadable logo colours, unsupported claims and the brand's own banned words are caught before an agent copies them. [Getting started](#getting-started).
+
+BRAND.md is a sibling of Google's [DESIGN.md](https://github.com/google-labs-code/design.md) and uses the same grammar. DESIGN.md describes the visual system of one product surface. BRAND.md describes the identity behind it, and works on its own when there is no design system at all.
+
+Status: `alpha`. The format will change, and feedback is welcome.
 
 ## The Format
 
