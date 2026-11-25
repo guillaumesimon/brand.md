@@ -2,9 +2,7 @@
 
 **Unofficial.** This folder is a worked example of the BRAND.md format, not a Bolt document. It is not made, reviewed or endorsed by Bolt. The Bolt name, logo and imagery belong to Bolt.
 
-[`BRAND.md`](BRAND.md) transcribes Bolt's brand guidelines dated January 2024 (19 pages: tone of voice, logo, colour, typography). Nothing was added that the guidelines do not say. The images in `assets/visuals/` are crops of the guidelines' own pages.
-
-It is here to show what a real brand guideline looks like in the format, including what such guidelines usually leave out.
+[`BRAND.md`](BRAND.md) shows a real brand in the format: a wordmark-only logo in three colourways with its misuse examples, five colours with full print values, two typefaces, and copy that makes claims needing evidence.
 
 ## What the linter says, and why
 
@@ -12,8 +10,8 @@ It is here to show what a real brand guideline looks like in the format, includi
 node src/cli.js lint examples/bolt/BRAND.md --format text
 ```
 
-- **3 errors:** the three logo files in `assets/logo/` are not included. The guidelines are a PDF, and the official artwork is not reproduced here.
-- **3 notes on personality:** the guidelines name three tone-of-voice principles (thoughtfully concise, knowingly playful, comfortably at ease) and never say what they mean.
-- **3 notes on licences:** the guidelines do not state font licences.
+- **3 errors:** the three logo files in `assets/logo/` are not included. The official artwork is not reproduced here.
+- **3 notes on personality:** the three principles (thoughtfully concise, knowingly playful, comfortably at ease) are named without saying what each one rules out or changes.
+- **3 notes on licences:** no typeface licence is marked as verified.
 
-The file ends with a list of what the guidelines do not cover: positioning, audience, vocabulary, motion, imagery direction, a designated tagline, and evidence for the claims in their sample copy.
+Positioning, audience, vocabulary and motion are listed as not yet defined.

@@ -277,7 +277,7 @@ Panier Gris and Lanternfish are fictional. Bolt is real.
 
 - [`examples/panier-gris/`](examples/panier-gris/BRAND.md): a bakery with no product and no design system. BRAND.md on its own.
 - [`examples/lanternfish/`](examples/lanternfish/BRAND.md): a software company, with a [`product/DESIGN.md`](examples/lanternfish/product/DESIGN.md) that links to its brand and mirrors the required colours by value.
-- [`examples/bolt/`](examples/bolt/BRAND.md): a real brand, transcribed from Bolt's January 2024 guidelines. Unofficial and not endorsed by Bolt. It shows what real guidelines cover well (logo, colour, print values) and what they leave out, and it lints with errors on purpose: [why](examples/bolt/README.md).
+- [`examples/bolt/`](examples/bolt/BRAND.md): a real brand, Bolt. Unofficial and not endorsed by Bolt. Strong on logo, colour and print values, with sections it has not defined yet, and it lints with errors on purpose: [why](examples/bolt/README.md).
 
 ## Using it with an agent
 

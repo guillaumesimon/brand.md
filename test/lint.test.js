@@ -410,7 +410,7 @@ for (const example of ['panier-gris', 'lanternfish']) {
   });
 }
 
-test('example bolt: only the documented findings (missing logo artwork, gaps in the source)', () => {
+test('example bolt: only the documented findings (missing logo artwork, undefined traits, unverified licences)', () => {
   const file = join(ROOT, 'examples', 'bolt', 'BRAND.md');
   const report = lint(readFileSync(file, 'utf8'), { file });
   assert.deepEqual(report.summary, { errors: 3, warnings: 0, infos: 6 });
